@@ -1,0 +1,68 @@
+[
+  {
+    "id": "lagos-student",
+    "label": "Lagos student",
+    "persona": {
+      "name": "Tomi",
+      "location": "Lagos, Nigeria",
+      "age_range": "18-24",
+      "occupation": "University student",
+      "interests": ["quick meals", "Nollywood comedy", "football games", "budget buys"],
+      "budget_level": "low",
+      "tone": "casual and energetic",
+      "likes": ["fast setup", "local humour", "multiplayer", "good value"],
+      "dislikes": ["overpriced items", "slow pacing", "complicated setup"],
+      "language_preference": "English with light Nigerian phrasing",
+      "cultural_context": "Busy Lagos student balancing classes, friends, and transport costs",
+      "history": [
+        {"title": "Golden Morn Cereal Pack", "category": "Grocery_and_Gourmet_Food", "rating": 5, "review_text": "quick mornings before class"},
+        {"title": "The Wedding Party", "category": "Movies_and_TV", "rating": 5, "review_text": "funny and easy to watch with friends"},
+        {"title": "EA Sports FC 25", "category": "Video_Games", "rating": 4, "review_text": "great for weekend matches but pricey"}
+      ]
+    }
+  },
+  {
+    "id": "abuja-pro",
+    "label": "Abuja young professional",
+    "persona": {
+      "name": "Aisha",
+      "location": "Abuja, Nigeria",
+      "age_range": "25-34",
+      "occupation": "Policy analyst",
+      "interests": ["coffee", "political drama", "skincare", "work routines"],
+      "budget_level": "medium",
+      "tone": "measured and specific",
+      "likes": ["premium feel", "clear value", "smart storytelling", "daily usefulness"],
+      "dislikes": ["wasteful packaging", "weak performance", "messy finish"],
+      "language_preference": "English",
+      "cultural_context": "Abuja professional who values quality, convenience, and a polished routine",
+      "history": [
+        {"title": "Premium Ground Coffee Blend", "category": "Grocery_and_Gourmet_Food", "rating": 4, "review_text": "smooth for work mornings"},
+        {"title": "King of Boys", "category": "Movies_and_TV", "rating": 5, "review_text": "sharp political crime drama"},
+        {"title": "Matte Sunscreen SPF 50", "category": "All_Beauty", "rating": 4, "review_text": "good under makeup in heat"}
+      ]
+    }
+  },
+  {
+    "id": "ph-family",
+    "label": "Port Harcourt family shopper",
+    "persona": {
+      "name": "Chinedu",
+      "location": "Port Harcourt, Nigeria",
+      "age_range": "35-44",
+      "occupation": "Small business owner",
+      "interests": ["family movie nights", "drinks for guests", "skin care", "reliable products"],
+      "budget_level": "medium",
+      "tone": "warm and practical",
+      "likes": ["family friendly", "easy serving", "durable value", "gentle scent"],
+      "dislikes": ["harsh smell", "products children cannot use", "poor value"],
+      "language_preference": "English",
+      "cultural_context": "Family-focused Port Harcourt shopper buying for home use and visitors",
+      "history": [
+        {"title": "Zobo Hibiscus Drink Mix", "category": "Grocery_and_Gourmet_Food", "rating": 5, "review_text": "easy to serve when people visit"},
+        {"title": "Family Animation Night Collection", "category": "Movies_and_TV", "rating": 4, "review_text": "safe for children"},
+        {"title": "Shea Butter Moisturizing Cream", "category": "All_Beauty", "rating": 5, "review_text": "rich and helpful for dry skin"}
+      ]
+    }
+  }
+]

@@ -1,0 +1,25 @@
+{
+  "user_persona": {
+    "name": "Aisha",
+    "location": "Abuja, Nigeria",
+    "age_range": "25-34",
+    "occupation": "Policy analyst",
+    "interests": ["coffee", "political drama", "skincare", "work routines"],
+    "budget_level": "medium",
+    "tone": "measured and specific",
+    "likes": ["premium feel", "clear value", "smart storytelling", "daily usefulness"],
+    "dislikes": ["wasteful packaging", "weak performance", "messy finish"],
+    "language_preference": "English",
+    "cultural_context": "Abuja professional who values quality, convenience, and a polished routine",
+    "history": [
+      {
+        "title": "Premium Ground Coffee Blend",
+        "category": "Grocery_and_Gourmet_Food",
+        "rating": 4,
+        "review_text": "smooth for work mornings"
+      }
+    ]
+  },
+  "context": "I want a useful recommendation for weekday routines and relaxed evenings.",
+  "top_k": 10
+}

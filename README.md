@@ -1,0 +1,107 @@
+# BCT LLM Agent Challenge
+
+Containerized FastAPI app for the DSN x BCT hackathon tasks:
+
+- **Task A:** simulate a user's star rating and written review for a product.
+- **Task B:** rank personalized cross-domain recommendations for a user persona.
+
+The app uses deterministic local scoring/ranking for reproducibility and Groq for higher-quality generated review text and explanations when `GROQ_API_KEY` is available.
+
+## Quick Start
+
+```bash
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements-dev.txt
+uvicorn app.main:app --reload
+```
+
+Open `http://127.0.0.1:8000`.
+
+## Groq Setup
+
+Create `.env` from `.env.example` and add:
+
+```env
+GROQ_API_KEY=your_groq_key
+GROQ_MODEL=llama-3.1-8b-instant
+```
+
+The app still runs without a Groq key using deterministic fallback generation.
+
+## Docker
+
+```bash
+copy .env.example .env
+docker compose up --build
+```
+
+Then open `http://127.0.0.1:8000`.
+
+## Render Deployment
+
+This repository includes `render.yaml` for one-click Blueprint deployment on Render.
+
+Render settings:
+
+```text
+Build Command: pip install -r requirements.txt
+Start Command: python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+Health Check Path: /health
+```
+
+Set this secret in the Render dashboard:
+
+```env
+GROQ_API_KEY=your_groq_key
+```
+
+`GROQ_API_KEY` is intentionally marked `sync: false` in `render.yaml`, so the key is never committed to git.
+
+## API
+
+### Generate Review
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/v1/generate-review ^
+  -H "Content-Type: application/json" ^
+  -d @examples/generate_review.json
+```
+
+### Recommend
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/v1/recommend ^
+  -H "Content-Type: application/json" ^
+  -d @examples/recommend.json
+```
+
+## Solution Paper
+
+The paper deliverable is a Word document at `docs/BCT_Solution_Paper.docx`.
+
+Regenerate it with:
+
+```bash
+python scripts/create_solution_paper_docx.py
+```
+
+## Data Strategy
+
+The checked-in fixture data gives judges a zero-download demo. For the competition run, use Amazon Reviews 2023 categories:
+
+- `Grocery_and_Gourmet_Food`
+- `Movies_and_TV`
+- `Video_Games`
+- `All_Beauty`
+
+`scripts/build_dataset.py` documents the expected conversion flow from downloaded Amazon JSONL files into the app's local fixture shape.
+
+## Evaluation
+
+```bash
+pytest
+python scripts/evaluate.py
+```
+
+The `/api/v1/evaluation` endpoint reports fixture smoke metrics. Larger Amazon subset metrics should be generated with the same split logic after raw data is downloaded.

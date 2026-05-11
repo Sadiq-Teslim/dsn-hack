@@ -1,0 +1,74 @@
+[
+  {
+    "user_id": "lagos-student",
+    "item_id": "grocery-001",
+    "title": "Golden Morn Cereal Pack",
+    "category": "Grocery_and_Gourmet_Food",
+    "rating": 5,
+    "review_text": "This works well for quick mornings before class. It is filling, easy to make, and the taste is familiar without doing too much."
+  },
+  {
+    "user_id": "lagos-student",
+    "item_id": "movie-001",
+    "title": "The Wedding Party",
+    "category": "Movies_and_TV",
+    "rating": 5,
+    "review_text": "Funny, loud in the best way, and very easy to watch with friends. The family drama felt familiar and the pacing stayed lively."
+  },
+  {
+    "user_id": "lagos-student",
+    "item_id": "game-001",
+    "title": "EA Sports FC 25",
+    "category": "Video_Games",
+    "rating": 4,
+    "review_text": "Great for weekend matches with friends, though the price is high. I liked the multiplayer more than the career mode."
+  },
+  {
+    "user_id": "abuja-pro",
+    "item_id": "grocery-002",
+    "title": "Premium Ground Coffee Blend",
+    "category": "Grocery_and_Gourmet_Food",
+    "rating": 4,
+    "review_text": "Smooth enough for work mornings and not too bitter. I would prefer a stronger aroma, but it is dependable."
+  },
+  {
+    "user_id": "abuja-pro",
+    "item_id": "movie-002",
+    "title": "King of Boys",
+    "category": "Movies_and_TV",
+    "rating": 5,
+    "review_text": "Sharp, intense, and memorable. The politics and ambition made it feel bigger than a normal crime drama."
+  },
+  {
+    "user_id": "abuja-pro",
+    "item_id": "beauty-002",
+    "title": "Matte Sunscreen SPF 50",
+    "category": "All_Beauty",
+    "rating": 4,
+    "review_text": "Good under makeup and useful in Abuja heat. It stayed light, though the bottle could be bigger for the price."
+  },
+  {
+    "user_id": "ph-family",
+    "item_id": "grocery-003",
+    "title": "Zobo Hibiscus Drink Mix",
+    "category": "Grocery_and_Gourmet_Food",
+    "rating": 5,
+    "review_text": "The ginger comes through nicely and it is easy to serve when people visit. My family finished it quickly."
+  },
+  {
+    "user_id": "ph-family",
+    "item_id": "movie-003",
+    "title": "Family Animation Night Collection",
+    "category": "Movies_and_TV",
+    "rating": 4,
+    "review_text": "Safe and cheerful for children. Some stories are simple, but it does the job for a calm family evening."
+  },
+  {
+    "user_id": "ph-family",
+    "item_id": "beauty-001",
+    "title": "Shea Butter Moisturizing Cream",
+    "category": "All_Beauty",
+    "rating": 5,
+    "review_text": "Very rich and helpful when the weather dries my skin. It absorbs better than expected and smells gentle."
+  }
+]

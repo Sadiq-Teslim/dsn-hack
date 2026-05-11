@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: dsn-bct-llm-agent
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: LLM_PROVIDER
+        value: groq
+      - key: GROQ_MODEL
+        value: llama-3.1-8b-instant
+      - key: DATA_PATH
+        value: data/fixtures
+      - key: GROQ_API_KEY
+        sync: false

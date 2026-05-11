@@ -1,0 +1,112 @@
+[
+  {
+    "item_id": "grocery-001",
+    "title": "Golden Morn Cereal Pack",
+    "category": "Grocery_and_Gourmet_Food",
+    "description": "A quick cereal option for breakfast, often paired with milk and fruit.",
+    "brand": "Nestle",
+    "price": 8.5,
+    "average_rating": 4.4,
+    "rating_number": 820,
+    "attributes": {"flavor": "maize and malt", "serving": "family", "keywords": ["breakfast", "cereal", "quick"]}
+  },
+  {
+    "item_id": "grocery-002",
+    "title": "Premium Ground Coffee Blend",
+    "category": "Grocery_and_Gourmet_Food",
+    "description": "Medium roast coffee with chocolate notes for morning routines.",
+    "brand": "Daily Roast",
+    "price": 15.0,
+    "average_rating": 4.1,
+    "rating_number": 410,
+    "attributes": {"flavor": "medium roast", "serving": "office", "keywords": ["coffee", "morning", "work"]}
+  },
+  {
+    "item_id": "grocery-003",
+    "title": "Zobo Hibiscus Drink Mix",
+    "category": "Grocery_and_Gourmet_Food",
+    "description": "Hibiscus-based drink mix with ginger and pineapple notes.",
+    "brand": "Naija Pantry",
+    "price": 6.0,
+    "average_rating": 4.6,
+    "rating_number": 275,
+    "attributes": {"flavor": "hibiscus ginger", "serving": "party", "keywords": ["drink", "zobo", "ginger"]}
+  },
+  {
+    "item_id": "movie-001",
+    "title": "The Wedding Party",
+    "category": "Movies_and_TV",
+    "description": "A lively Nigerian romantic comedy centered on family, class, and celebration.",
+    "brand": "FilmOne",
+    "price": 4.99,
+    "average_rating": 4.5,
+    "rating_number": 1300,
+    "attributes": {"genre": "romantic comedy", "keywords": ["nollywood", "comedy", "family"]}
+  },
+  {
+    "item_id": "movie-002",
+    "title": "King of Boys",
+    "category": "Movies_and_TV",
+    "description": "A political crime drama about power, loyalty, and ambition.",
+    "brand": "Kemi Adetiba Visuals",
+    "price": 5.99,
+    "average_rating": 4.7,
+    "rating_number": 1900,
+    "attributes": {"genre": "crime drama", "keywords": ["nollywood", "politics", "drama"]}
+  },
+  {
+    "item_id": "movie-003",
+    "title": "Family Animation Night Collection",
+    "category": "Movies_and_TV",
+    "description": "A bundle of animated features suitable for children and family viewing.",
+    "brand": "Home Cinema",
+    "price": 9.99,
+    "average_rating": 4.0,
+    "rating_number": 350,
+    "attributes": {"genre": "animation", "keywords": ["family", "kids", "weekend"]}
+  },
+  {
+    "item_id": "game-001",
+    "title": "EA Sports FC 25",
+    "category": "Video_Games",
+    "description": "Football simulation game with career, online, and local multiplayer modes.",
+    "brand": "EA",
+    "price": 69.99,
+    "average_rating": 4.2,
+    "rating_number": 2300,
+    "attributes": {"platform": "console", "keywords": ["football", "sports", "multiplayer"]}
+  },
+  {
+    "item_id": "game-002",
+    "title": "Cozy Farm Simulator",
+    "category": "Video_Games",
+    "description": "Relaxed farming and town-building game for casual play.",
+    "brand": "Indie Acre",
+    "price": 24.99,
+    "average_rating": 4.6,
+    "rating_number": 620,
+    "attributes": {"platform": "pc", "keywords": ["cozy", "farming", "relaxing"]}
+  },
+  {
+    "item_id": "beauty-001",
+    "title": "Shea Butter Moisturizing Cream",
+    "category": "All_Beauty",
+    "description": "Rich body cream with shea butter for dry skin and harmattan weather.",
+    "brand": "GlowRoot",
+    "price": 11.5,
+    "average_rating": 4.5,
+    "rating_number": 980,
+    "attributes": {"skin_type": "dry", "keywords": ["shea", "moisture", "harmattan"]}
+  },
+  {
+    "item_id": "beauty-002",
+    "title": "Matte Sunscreen SPF 50",
+    "category": "All_Beauty",
+    "description": "Lightweight sunscreen designed for humid weather and daily wear.",
+    "brand": "SunKind",
+    "price": 18.0,
+    "average_rating": 4.3,
+    "rating_number": 760,
+    "attributes": {"skin_type": "oily", "keywords": ["sunscreen", "matte", "daily"]}
+  }
+]

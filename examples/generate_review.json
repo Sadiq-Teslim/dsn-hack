@@ -1,0 +1,31 @@
+{
+  "user_persona": {
+    "name": "Tomi",
+    "location": "Lagos, Nigeria",
+    "age_range": "18-24",
+    "occupation": "University student",
+    "interests": ["quick meals", "Nollywood comedy", "football games", "budget buys"],
+    "budget_level": "low",
+    "tone": "casual and energetic",
+    "likes": ["fast setup", "local humour", "multiplayer", "good value"],
+    "dislikes": ["overpriced items", "slow pacing", "complicated setup"],
+    "language_preference": "English with light Nigerian phrasing",
+    "cultural_context": "Busy Lagos student balancing classes, friends, and transport costs",
+    "history": [
+      {
+        "title": "Golden Morn Cereal Pack",
+        "category": "Grocery_and_Gourmet_Food",
+        "rating": 5,
+        "review_text": "quick mornings before class"
+      }
+    ]
+  },
+  "product": {
+    "title": "Zobo Hibiscus Drink Mix",
+    "category": "Grocery_and_Gourmet_Food",
+    "description": "Hibiscus-based drink mix with ginger and pineapple notes.",
+    "price": 6.0,
+    "brand": "Naija Pantry",
+    "attributes": {"flavor": "hibiscus ginger"}
+  }
+}
