@@ -14,7 +14,12 @@ class GroqClient:
     def configured(self) -> bool:
         return bool(self.settings.groq_api_key)
 
-    async def chat(self, messages: list[dict[str, str]], temperature: float = 0.4) -> str | None:
+    async def chat(
+        self,
+        messages: list[dict[str, str]],
+        temperature: float = 0.4,
+        response_format: dict[str, str] | None = None,
+    ) -> str | None:
         if not self.configured:
             return None
 
@@ -25,6 +30,8 @@ class GroqClient:
             "temperature": temperature,
             "max_tokens": 500,
         }
+        if response_format:
+            payload["response_format"] = response_format
         headers = {
             "Authorization": f"Bearer {self.settings.groq_api_key}",
             "Content-Type": "application/json",

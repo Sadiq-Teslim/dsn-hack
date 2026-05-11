@@ -105,3 +105,31 @@ python scripts/evaluate.py
 ```
 
 The `/api/v1/evaluation` endpoint reports fixture smoke metrics. Larger Amazon subset metrics should be generated with the same split logic after raw data is downloaded.
+
+## Real Amazon Subset
+
+For a stronger competition run, stream a bounded real subset from the official Amazon Reviews 2023 files:
+
+```bash
+python scripts/download_amazon_subset.py --max-reviews-per-category 400
+```
+
+Then run the app against the generated subset:
+
+```bash
+$env:DATA_PATH="data/amazon_subset"
+uvicorn app.main:app --reload
+```
+
+The script writes `products.json`, `reviews.json`, `splits.json`, and `subset_metrics.json`.
+
+Compare personalized models against baselines:
+
+```bash
+python scripts/evaluate_dataset.py --data-path data/amazon_smoke --output docs/evaluation_report.json
+```
+
+The current checked-in smoke report shows:
+
+- Task A personalized RMSE: `0.8734` vs global baseline `1.3935`
+- Task B personalized NDCG@10: `0.1879` vs popularity baseline `0.0413`

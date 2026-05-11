@@ -1,7 +1,44 @@
+import json
+
+from pydantic import BaseModel, Field, ValidationError
+
 from app.config import Settings
 from app.schemas import EvidenceItem, ProductDetails, UserPersona
 from app.services.groq_client import GroqClient
 from app.services.persona import PersonaSummary
+
+
+class ReviewDraft(BaseModel):
+    review_text: str = Field(min_length=40, max_length=900)
+
+
+class RecommendationDraft(BaseModel):
+    summary: str = Field(min_length=35, max_length=700)
+
+
+def _json_object(text: str | None) -> dict | None:
+    if not text:
+        return None
+    stripped = text.strip()
+    if stripped.startswith("```"):
+        stripped = stripped.strip("`")
+        stripped = stripped.removeprefix("json").strip()
+    start = stripped.find("{")
+    end = stripped.rfind("}")
+    if start == -1 or end == -1 or end <= start:
+        return None
+    try:
+        return json.loads(stripped[start : end + 1])
+    except json.JSONDecodeError:
+        return None
+
+
+def _clean_review_text(text: str) -> str:
+    cleaned = " ".join(text.split())
+    blocked = ["as an ai", "i am an ai", "language model"]
+    if any(phrase in cleaned.lower() for phrase in blocked):
+        raise ValueError("Generated text exposed assistant framing.")
+    return cleaned
 
 
 def fallback_review(
@@ -50,9 +87,10 @@ async def generate_review_text(
         {
             "role": "system",
             "content": (
-                "You simulate concise product reviews from a user persona. "
-                "Write like a real reviewer, not an assistant. Avoid stereotypes. "
-                "Use Nigerian context only when it naturally affects value, convenience, tone, or use."
+                "You simulate concise product reviews from a user persona. Return strict JSON only. "
+                "Schema: {\"review_text\": \"55-95 word first-person product review\"}. "
+                "Write like a real reviewer, not an assistant. Avoid stereotypes. Use Nigerian context "
+                "only when it naturally affects value, convenience, tone, or use."
             ),
         },
         {
@@ -61,13 +99,23 @@ async def generate_review_text(
                 f"{summary.describe_for_prompt(product)}\n"
                 f"Predicted rating: {rating}/5\n"
                 f"Retrieved evidence:\n{evidence_text or 'No close evidence.'}\n"
-                "Write one review of 55-95 words. Do not mention that you are an AI."
+                "Write one review of 55-95 words. Do not mention that you are an AI. "
+                "Output JSON only."
             ),
         },
     ]
-    generated = await client.chat(messages, temperature=0.55)
-    if generated:
-        return generated, False
+    generated = await client.chat(
+        messages,
+        temperature=0.45,
+        response_format={"type": "json_object"},
+    )
+    parsed = _json_object(generated)
+    if parsed:
+        try:
+            draft = ReviewDraft.model_validate(parsed)
+            return _clean_review_text(draft.review_text), False
+        except (ValidationError, ValueError):
+            pass
     return fallback_review(persona, product, rating, evidence), True
 
 
@@ -81,7 +129,10 @@ async def generate_recommendation_summary(
     messages = [
         {
             "role": "system",
-            "content": "Explain recommendation rankings in one concise paragraph for judges.",
+            "content": (
+                "Explain recommendation rankings for judges. Return strict JSON only. "
+                "Schema: {\"summary\": \"45-80 word explanation\"}."
+            ),
         },
         {
             "role": "user",
@@ -89,11 +140,20 @@ async def generate_recommendation_summary(
                 f"Persona: {PersonaSummary(persona).describe_for_prompt()}\n"
                 f"Context: {context or 'None'}\n"
                 f"Ranked items: {', '.join(ranked_titles)}\n"
-                "Explain why this ranking is personalized in 45-80 words."
+                "Explain why this ranking is personalized in 45-80 words. Output JSON only."
             ),
         },
     ]
-    generated = await client.chat(messages, temperature=0.35)
-    if generated:
-        return generated, False
+    generated = await client.chat(
+        messages,
+        temperature=0.25,
+        response_format={"type": "json_object"},
+    )
+    parsed = _json_object(generated)
+    if parsed:
+        try:
+            draft = RecommendationDraft.model_validate(parsed)
+            return " ".join(draft.summary.split()), False
+        except ValidationError:
+            pass
     return fallback_recommendation_summary(persona, context), True

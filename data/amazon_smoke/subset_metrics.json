@@ -1,0 +1,19 @@
+{
+  "source": "Amazon Reviews 2023 official McAuley Lab JSONL.GZ files",
+  "categories": [
+    "All_Beauty"
+  ],
+  "products": 21,
+  "reviews": 27,
+  "users": 8,
+  "average_rating": 4.148,
+  "train_interactions": 19,
+  "test_interactions": 8,
+  "category_counts": {
+    "All_Beauty": {
+      "products": 21,
+      "reviews": 27
+    }
+  },
+  "rmse_baseline_estimate": 1.145
+}

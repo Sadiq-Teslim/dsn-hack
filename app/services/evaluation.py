@@ -39,6 +39,8 @@ def fixture_metrics(products: list[dict], reviews: list[dict]) -> EvaluationMetr
         if len(user_reviews) < 2:
             continue
         held_out = user_reviews[-1]
+        if held_out["item_id"] not in product_by_id:
+            continue
         persona = _demo_persona_from_reviews(user_id, user_reviews)
         product_item = product_by_id[held_out["item_id"]]
         product = ProductDetails(

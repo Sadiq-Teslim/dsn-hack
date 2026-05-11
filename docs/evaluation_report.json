@@ -1,0 +1,19 @@
+{
+  "data_path": "data\\amazon_smoke",
+  "evaluated_users": 7,
+  "task_a": {
+    "personalized_rmse": 0.8734,
+    "global_mean_rmse": 1.3935,
+    "item_mean_rmse": 1.3935
+  },
+  "task_b": {
+    "personalized_ndcg_at_10": 0.1879,
+    "popularity_ndcg_at_10": 0.0413,
+    "personalized_hit_rate_at_10": 0.2857,
+    "popularity_hit_rate_at_10": 0.1429
+  },
+  "ablations": {
+    "rating_lift_vs_global_rmse": 0.5201,
+    "ranking_lift_vs_popularity_ndcg": 0.1466
+  }
+}

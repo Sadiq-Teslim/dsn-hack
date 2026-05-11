@@ -16,6 +16,8 @@ class DataStore:
 
     def _load_json(self, filename: str) -> list[dict[str, Any]]:
         path = self.data_path / filename
+        if not path.exists() and filename == "demo_personas.json":
+            path = Path("data/fixtures") / filename
         with path.open("r", encoding="utf-8") as file:
             return json.load(file)
 
