@@ -88,6 +88,13 @@ When `YARNGPT_API_KEY` is set, `POST /api/v1/yarn-tts` sends the Yarn Mode text 
 YarnGPT TTS and returns playable `mp3` audio to the browser. If the key is missing, the UI falls
 back to browser speech synthesis.
 
+The UI also supports browser voice input where available:
+
+- Task A: speak product context into the product description field.
+- Task B: speak the recommendation context.
+
+Voice input uses the browser Speech Recognition API and falls back to normal typing when unsupported.
+
 ## Solution Paper
 
 The paper deliverable is a Word document at `docs/BCT_Solution_Paper.docx`.

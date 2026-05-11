@@ -495,6 +495,36 @@ div {
 .voice-bars span:nth-child(3) { height: 18px; }
 .voice-bars span:nth-child(4) { height: 10px; }
 
+.voice-input-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.voice-status {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.voice-status.recording {
+  color: #b91c1c;
+}
+
+.voice-status.recording::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 7px;
+  border-radius: 999px;
+  background: #ef4444;
+  box-shadow: 0 0 0 5px rgba(239, 68, 68, 0.12);
+}
+
 .recommendation-row:first-child {
   border-top: 0;
   padding-top: 0;

@@ -7,6 +7,7 @@ const {
   bindPersonaSelect,
   bindNavigation,
   personaSummary,
+  createVoiceInput,
   playYarnAudio,
   renderYarnResult,
 } = window.AgentApp;
@@ -118,6 +119,11 @@ async function init() {
     fillProduct(products.find((item) => item.title === event.target.value));
   });
   $("generate-review").addEventListener("click", generateReview);
+  createVoiceInput({
+    button: $("speak-description"),
+    target: $("product-description"),
+    status: $("description-voice-status"),
+  });
   $("generate-yarn").addEventListener("click", generateYarn);
   $("speak-yarn").addEventListener("click", () => {
     const played = playYarnAudio(

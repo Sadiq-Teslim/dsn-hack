@@ -111,6 +111,73 @@ function readAloud(text) {
   return true;
 }
 
+function createVoiceInput({ button, target, status, append = false }) {
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!Recognition) {
+    button.disabled = true;
+    status.textContent = "Voice input is not supported in this browser. Type instead.";
+    return null;
+  }
+
+  const recognition = new Recognition();
+  recognition.lang = "en-NG";
+  recognition.interimResults = true;
+  recognition.continuous = false;
+  let finalTranscript = "";
+  let isListening = false;
+  const idleLabel = button.textContent;
+
+  recognition.onstart = () => {
+    finalTranscript = "";
+    isListening = true;
+    button.textContent = "Listening...";
+    status.textContent = "Listening. Speak naturally.";
+    status.classList.add("recording");
+  };
+
+  recognition.onresult = (event) => {
+    let interim = "";
+    for (let index = event.resultIndex; index < event.results.length; index += 1) {
+      const transcript = event.results[index][0].transcript;
+      if (event.results[index].isFinal) {
+        finalTranscript += transcript;
+      } else {
+        interim += transcript;
+      }
+    }
+    const current = `${finalTranscript} ${interim}`.trim();
+    if (current) {
+      target.value = append && target.value.trim() ? `${target.value.trim()} ${current}` : current;
+    }
+  };
+
+  recognition.onerror = (event) => {
+    status.textContent = `Voice input stopped: ${event.error}. You can type instead.`;
+    status.classList.remove("recording");
+    button.textContent = idleLabel;
+    isListening = false;
+  };
+
+  recognition.onend = () => {
+    status.classList.remove("recording");
+    button.textContent = idleLabel;
+    isListening = false;
+    if (target.value.trim()) {
+      status.textContent = "Voice captured. You can edit the text before generating.";
+    } else {
+      status.textContent = "No speech captured. Try again or type manually.";
+    }
+  };
+
+  button.addEventListener("click", () => {
+    if (!isListening) {
+      recognition.start();
+    }
+  });
+  status.textContent = "Voice input ready.";
+  return recognition;
+}
+
 async function generateYarnAudio(text, voice) {
   return api("/api/v1/yarn-tts", {
     method: "POST",
@@ -164,6 +231,7 @@ window.AgentApp = {
   bindNavigation,
   personaSummary,
   readAloud,
+  createVoiceInput,
   generateYarnAudio,
   playYarnAudio,
   renderYarnResult,

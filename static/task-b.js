@@ -7,6 +7,7 @@ const {
   bindPersonaSelect,
   bindNavigation,
   personaSummary,
+  createVoiceInput,
   playYarnAudio,
   renderYarnResult,
 } = window.AgentApp;
@@ -98,6 +99,11 @@ async function init() {
     button.addEventListener("click", () => {
       $("recommend-context").value = button.dataset.context;
     });
+  });
+  createVoiceInput({
+    button: $("speak-context"),
+    target: $("recommend-context"),
+    status: $("context-voice-status"),
   });
   $("generate-recommendations").addEventListener("click", generateRecommendations);
   $("generate-yarn").addEventListener("click", generateYarn);
