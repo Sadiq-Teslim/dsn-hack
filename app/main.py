@@ -46,6 +46,21 @@ async def index() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")
 
 
+@app.get("/task-a", include_in_schema=False)
+async def task_a_page() -> FileResponse:
+    return FileResponse(STATIC_DIR / "task-a.html")
+
+
+@app.get("/task-b", include_in_schema=False)
+async def task_b_page() -> FileResponse:
+    return FileResponse(STATIC_DIR / "task-b.html")
+
+
+@app.get("/evaluation", include_in_schema=False)
+async def evaluation_page() -> FileResponse:
+    return FileResponse(STATIC_DIR / "evaluation.html")
+
+
 @app.get("/health", response_model=HealthResponse)
 async def health(settings: Settings = Depends(get_settings)) -> HealthResponse:
     return HealthResponse(

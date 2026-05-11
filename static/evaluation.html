@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Evaluation | BCT Agent Studio</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/static/styles.css?v=2" />
+  </head>
+  <body>
+    <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/85 backdrop-blur-xl">
+      <div class="shell flex h-[76px] items-center justify-between">
+        <a href="/" class="flex items-center gap-3">
+          <span class="brand-mark" aria-hidden="true">
+            <span class="bg-[#4285F4]"></span><span class="bg-[#EA4335]"></span>
+            <span class="bg-[#FBBC04]"></span><span class="bg-[#34A853]"></span>
+          </span>
+          <span class="text-sm font-black uppercase tracking-wide text-slate-950">BCT Agent Studio</span>
+        </a>
+        <nav class="flex items-center gap-5">
+          <a class="nav-link" data-nav href="/">Home</a>
+          <a class="nav-link" data-nav href="/task-a">Task A</a>
+          <a class="nav-link" data-nav href="/task-b">Task B</a>
+          <a class="nav-link hidden sm:inline" data-nav href="/evaluation">Evaluation</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="shell py-10">
+      <section class="mb-8 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
+        <div>
+          <span class="pill"><span class="dot" data-health-dot></span><span data-health-text>Checking service</span></span>
+          <p class="mt-7 text-sm font-black uppercase text-[#FBBC04]">Evaluation · Reproducibility</p>
+          <h1 class="mt-2 max-w-4xl text-5xl font-black leading-none text-slate-950 md:text-7xl">
+            Show the judges the system is measurable.
+          </h1>
+          <p class="mt-5 max-w-2xl text-lg font-semibold leading-8 text-slate-600">
+            This page surfaces the fixture split metrics and the runbook for scaling evaluation to
+            the Amazon Reviews subset.
+          </p>
+        </div>
+        <button id="load-metrics" class="button-primary">Refresh Metrics</button>
+      </section>
+
+      <section id="metrics-result" class="grid gap-5 md:grid-cols-4"></section>
+
+      <section class="mt-8 grid gap-5 lg:grid-cols-2">
+        <article class="panel p-7">
+          <h2 class="text-2xl font-black">What this proves</h2>
+          <p class="mt-3 leading-7 text-slate-600">
+            The fixture metrics are smoke tests. They prove the endpoints, ranking pipeline, rating
+            model, and evaluation code are connected. For final scoring, the same scripts can process
+            larger Amazon category samples.
+          </p>
+        </article>
+        <article class="panel p-7">
+          <h2 class="text-2xl font-black">Deployment checklist</h2>
+          <ul class="mt-4 space-y-3 text-slate-700">
+            <li><strong>Health:</strong> /health returns ok.</li>
+            <li><strong>Task A:</strong> review endpoint returns rating, review, reasoning, evidence.</li>
+            <li><strong>Task B:</strong> recommend endpoint returns ranked top-k items.</li>
+            <li><strong>Paper:</strong> DOCX solution paper is included in docs.</li>
+          </ul>
+        </article>
+      </section>
+    </main>
+
+    <script src="/static/shared.js?v=2"></script>
+    <script src="/static/evaluation.js?v=2"></script>
+  </body>
+</html>

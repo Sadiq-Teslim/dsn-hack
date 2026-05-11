@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Task B | Recommendations</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/static/styles.css?v=2" />
+  </head>
+  <body>
+    <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/85 backdrop-blur-xl">
+      <div class="shell flex h-[76px] items-center justify-between">
+        <a href="/" class="flex items-center gap-3">
+          <span class="brand-mark" aria-hidden="true">
+            <span class="bg-[#4285F4]"></span><span class="bg-[#EA4335]"></span>
+            <span class="bg-[#FBBC04]"></span><span class="bg-[#34A853]"></span>
+          </span>
+          <span class="text-sm font-black uppercase tracking-wide text-slate-950">BCT Agent Studio</span>
+        </a>
+        <nav class="flex items-center gap-5">
+          <a class="nav-link" data-nav href="/">Home</a>
+          <a class="nav-link" data-nav href="/task-a">Task A</a>
+          <a class="nav-link" data-nav href="/task-b">Task B</a>
+          <a class="nav-link hidden sm:inline" data-nav href="/evaluation">Evaluation</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="shell py-10">
+      <section class="mb-8 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
+        <div>
+          <span class="pill"><span class="dot" data-health-dot></span><span data-health-text>Checking service</span></span>
+          <p class="mt-7 text-sm font-black uppercase text-[#34A853]">Task B · Recommendation</p>
+          <h1 class="mt-2 max-w-4xl text-5xl font-black leading-none text-slate-950 md:text-7xl">
+            Rank items around a person's real context.
+          </h1>
+          <p class="mt-5 max-w-2xl text-lg font-semibold leading-8 text-slate-600">
+            The ranker scores candidates from history, persona preferences, context text, budget fit,
+            product quality, and cross-domain cold-start signals.
+          </p>
+        </div>
+        <button id="generate-recommendations" class="button-primary">Recommend</button>
+      </section>
+
+      <section class="workspace-grid">
+        <aside class="panel p-5">
+          <label class="mb-5 block">
+            <span class="field-label">Persona</span>
+            <select id="persona-select" class="select"></select>
+          </label>
+          <div id="persona-card"></div>
+        </aside>
+
+        <section class="grid gap-5">
+          <div class="panel p-5">
+            <label class="block">
+              <span class="field-label">Recommendation context</span>
+              <textarea id="recommend-context" rows="4" class="textarea">I want useful options for this week that fit my budget and routine.</textarea>
+            </label>
+            <div class="mt-4 flex flex-wrap gap-2">
+              <button class="tag" data-context="I need affordable things for a busy school week.">Student week</button>
+              <button class="tag" data-context="I want quality picks for weekday work routines and relaxed evenings.">Work routine</button>
+              <button class="tag" data-context="I am shopping for family-friendly home use and guests this weekend.">Family weekend</button>
+            </div>
+          </div>
+
+          <article id="recommend-result" class="panel result-box p-6">
+            <div class="flex h-full min-h-[360px] items-center justify-center rounded-[22px] bg-slate-50 p-8 text-center">
+              <div>
+                <p class="text-sm font-black uppercase text-slate-400">Waiting for input</p>
+                <h2 class="mt-3 text-3xl font-black">Generate recommendations to inspect the ranked list.</h2>
+                <p class="mx-auto mt-3 max-w-md text-slate-600">The result will show top items, scores, preference matches, and a concise personalized explanation.</p>
+              </div>
+            </div>
+          </article>
+        </section>
+      </section>
+    </main>
+
+    <script src="/static/shared.js?v=2"></script>
+    <script src="/static/task-b.js?v=2"></script>
+  </body>
+</html>
