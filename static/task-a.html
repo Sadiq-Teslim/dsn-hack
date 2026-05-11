@@ -30,7 +30,7 @@
       <section class="mb-8 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
         <div>
           <span class="pill"><span class="dot" data-health-dot></span><span data-health-text>Checking service</span></span>
-          <p class="mt-7 text-sm font-black uppercase text-[#4285F4]">Task A · User Modeling</p>
+          <p class="mt-7 text-sm font-black uppercase text-[#4285F4]">Task A / User Modeling</p>
           <h1 class="mt-2 max-w-4xl text-5xl font-black leading-none text-slate-950 md:text-7xl">
             Simulate the review a user would actually write.
           </h1>
@@ -51,7 +51,7 @@
           <div id="persona-card"></div>
         </aside>
 
-        <section class="grid gap-5 xl:grid-cols-[0.86fr_1.14fr]">
+        <section class="grid gap-5">
           <form class="panel p-5">
             <label class="mb-4 block">
               <span class="field-label">Product</span>
@@ -81,15 +81,44 @@
             </label>
           </form>
 
-          <article id="review-result" class="panel result-box p-6">
-            <div class="flex h-full min-h-[360px] items-center justify-center rounded-[22px] bg-slate-50 p-8 text-center">
-              <div>
-                <p class="text-sm font-black uppercase text-slate-400">Waiting for input</p>
-                <h2 class="mt-3 text-3xl font-black">Generate a review to inspect the simulated behavior.</h2>
-                <p class="mx-auto mt-3 max-w-md text-slate-600">The result will show a predicted rating, review text, confidence, reasoning, and evidence from the persona history.</p>
+          <div class="grid gap-5 lg:grid-cols-2">
+            <article id="review-result" class="panel result-box p-6">
+              <div class="flex h-full min-h-[360px] items-center justify-center rounded-[22px] bg-slate-50 p-8 text-center">
+                <div>
+                  <p class="text-sm font-black uppercase text-slate-400">Waiting for input</p>
+                  <h2 class="mt-3 text-3xl font-black">Generate a review to inspect the simulated behavior.</h2>
+                  <p class="mx-auto mt-3 max-w-md text-slate-600">The result will show a predicted rating, review text, confidence, reasoning, and evidence from the persona history.</p>
+                </div>
               </div>
-            </div>
-          </article>
+            </article>
+            <article id="yarn-card" class="yarn-panel">
+              <div class="flex items-center gap-3">
+                <span class="voice-bars" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+                <div>
+                  <p class="text-sm font-black uppercase text-slate-500">Yarn Mode</p>
+                  <h2 class="text-2xl font-black text-slate-950">Local voice layer</h2>
+                </div>
+              </div>
+              <p class="mt-3 text-slate-600">After generating a review, turn it into a voice-ready Nigerian local-language explanation and read it aloud in-browser.</p>
+              <div class="yarn-controls mt-5">
+                <label class="block">
+                  <span class="field-label">Voice style</span>
+                  <select id="yarn-mode" class="select">
+                    <option>Nigerian Pidgin</option>
+                    <option>Yoruba-flavoured English</option>
+                    <option>Hausa-flavoured English</option>
+                    <option>Igbo-flavoured English</option>
+                    <option>Formal judge summary</option>
+                  </select>
+                </label>
+                <button id="generate-yarn" class="button-secondary" type="button" disabled>Yarn It</button>
+                <button id="speak-yarn" class="button-primary" type="button" disabled>Read Aloud</button>
+              </div>
+              <div id="yarn-result" class="mt-5 rounded-3xl bg-white p-5 text-slate-700">
+                Generate a review first.
+              </div>
+            </article>
+          </div>
         </section>
       </section>
     </main>

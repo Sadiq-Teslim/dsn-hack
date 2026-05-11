@@ -81,6 +81,21 @@ class RecommendResponse(BaseModel):
     fallback_used: bool
 
 
+class YarnRequest(BaseModel):
+    user_persona: UserPersona
+    source_text: str = Field(min_length=1)
+    mode: str = "Nigerian Pidgin"
+    task: str = "review"
+
+
+class YarnResponse(BaseModel):
+    mode: str
+    voice_script: str
+    audio_hint: str
+    judge_note: str
+    fallback_used: bool
+
+
 class DemoPersona(BaseModel):
     id: str
     label: str

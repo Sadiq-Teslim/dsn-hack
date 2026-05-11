@@ -70,3 +70,21 @@ def test_fixture_evaluation_metrics() -> None:
     payload = response.json()
     assert payload["task_a_rmse"] >= 0
     assert 0 <= payload["task_b_ndcg_at_10"] <= 1
+
+
+def test_yarn_mode_endpoint_returns_voice_script() -> None:
+    persona = client.get("/api/v1/demo-personas").json()[0]["persona"]
+    response = client.post(
+        "/api/v1/yarn",
+        json={
+            "user_persona": persona,
+            "source_text": "The product scored 4.7 because it fits the user's taste and budget.",
+            "mode": "Nigerian Pidgin",
+            "task": "review",
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["voice_script"]
+    assert payload["judge_note"]
+    assert payload["mode"] == "Nigerian Pidgin"

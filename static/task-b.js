@@ -1,5 +1,18 @@
 (() => {
-const { api, state, escapeHtml, loadBaseData, bindPersonaSelect, bindNavigation, personaSummary } = window.AgentApp;
+const {
+  api,
+  state,
+  escapeHtml,
+  loadBaseData,
+  bindPersonaSelect,
+  bindNavigation,
+  personaSummary,
+  readAloud,
+  renderYarnResult,
+} = window.AgentApp;
+
+let latestRankingText = "";
+let latestYarnText = "";
 
 function renderPersona(selected) {
   $("persona-card").innerHTML = personaSummary(selected.persona);
@@ -35,6 +48,12 @@ function renderRecommendations(result) {
     </div>
     <div>${rows}</div>
   `;
+  latestRankingText = `${result.reasoning} Top picks: ${result.items
+    .slice(0, 5)
+    .map((item) => `${item.rank}. ${item.title}: ${item.reason}`)
+    .join(" ")}`;
+  $("generate-yarn").disabled = false;
+  $("yarn-result").innerHTML = "Ready. Choose a voice style and click Yarn It.";
 }
 
 async function generateRecommendations() {
@@ -54,6 +73,23 @@ async function generateRecommendations() {
   renderRecommendations(result);
 }
 
+async function generateYarn() {
+  if (!latestRankingText) return;
+  $("yarn-result").innerHTML = "Preparing local voice script...";
+  const payload = await api("/api/v1/yarn", {
+    method: "POST",
+    body: JSON.stringify({
+      user_persona: state.activePersona.persona,
+      source_text: latestRankingText,
+      mode: $("yarn-mode").value,
+      task: "recommendation ranking",
+    }),
+  });
+  latestYarnText = payload.voice_script;
+  renderYarnResult($("yarn-result"), payload);
+  $("speak-yarn").disabled = false;
+}
+
 async function init() {
   bindNavigation();
   await loadBaseData();
@@ -64,6 +100,12 @@ async function init() {
     });
   });
   $("generate-recommendations").addEventListener("click", generateRecommendations);
+  $("generate-yarn").addEventListener("click", generateYarn);
+  $("speak-yarn").addEventListener("click", () => {
+    if (!readAloud(latestYarnText)) {
+      $("yarn-result").innerHTML += `<p class="mt-3 text-red-700">This browser does not support speech synthesis.</p>`;
+    }
+  });
 }
 
 init().catch((error) => {

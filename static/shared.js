@@ -98,6 +98,30 @@ function bindNavigation() {
   });
 }
 
+function readAloud(text) {
+  if (!("speechSynthesis" in window)) {
+    return false;
+  }
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "en-NG";
+  utterance.rate = 0.92;
+  utterance.pitch = 1.02;
+  window.speechSynthesis.speak(utterance);
+  return true;
+}
+
+function renderYarnResult(container, payload) {
+  container.innerHTML = `
+    <p class="text-sm font-black uppercase text-slate-500">${escapeHtml(payload.mode)}</p>
+    <p class="mt-3 text-xl font-semibold leading-8 text-slate-800">${escapeHtml(payload.voice_script)}</p>
+    <div class="mt-4 rounded-2xl bg-slate-50 p-4">
+      <p class="text-sm font-black uppercase text-slate-400">Judge note</p>
+      <p class="mt-2 text-slate-600">${escapeHtml(payload.judge_note)}</p>
+    </div>
+  `;
+}
+
 window.AgentApp = {
   $,
   api,
@@ -108,4 +132,6 @@ window.AgentApp = {
   bindPersonaSelect,
   bindNavigation,
   personaSummary,
+  readAloud,
+  renderYarnResult,
 };

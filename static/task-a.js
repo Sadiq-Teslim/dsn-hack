@@ -1,5 +1,18 @@
 (() => {
-const { api, state, escapeHtml, loadBaseData, bindPersonaSelect, bindNavigation, personaSummary } = window.AgentApp;
+const {
+  api,
+  state,
+  escapeHtml,
+  loadBaseData,
+  bindPersonaSelect,
+  bindNavigation,
+  personaSummary,
+  readAloud,
+  renderYarnResult,
+} = window.AgentApp;
+
+let latestReviewText = "";
+let latestYarnText = "";
 
 function fillProduct(product) {
   $("product-title").value = product.title;
@@ -55,6 +68,9 @@ function renderReview(result) {
       </div>
     </div>
   `;
+  latestReviewText = `${result.rating}/5. ${result.review_text} Reasoning: ${result.reasoning}`;
+  $("generate-yarn").disabled = false;
+  $("yarn-result").innerHTML = "Ready. Choose a voice style and click Yarn It.";
 }
 
 async function generateReview() {
@@ -73,6 +89,23 @@ async function generateReview() {
   renderReview(result);
 }
 
+async function generateYarn() {
+  if (!latestReviewText) return;
+  $("yarn-result").innerHTML = "Preparing local voice script...";
+  const payload = await api("/api/v1/yarn", {
+    method: "POST",
+    body: JSON.stringify({
+      user_persona: state.activePersona.persona,
+      source_text: latestReviewText,
+      mode: $("yarn-mode").value,
+      task: "review simulation",
+    }),
+  });
+  latestYarnText = payload.voice_script;
+  renderYarnResult($("yarn-result"), payload);
+  $("speak-yarn").disabled = false;
+}
+
 async function init() {
   bindNavigation();
   const { products } = await loadBaseData();
@@ -85,6 +118,12 @@ async function init() {
     fillProduct(products.find((item) => item.title === event.target.value));
   });
   $("generate-review").addEventListener("click", generateReview);
+  $("generate-yarn").addEventListener("click", generateYarn);
+  $("speak-yarn").addEventListener("click", () => {
+    if (!readAloud(latestYarnText)) {
+      $("yarn-result").innerHTML += `<p class="mt-3 text-red-700">This browser does not support speech synthesis.</p>`;
+    }
+  });
 }
 
 init().catch((error) => {

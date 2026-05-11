@@ -15,10 +15,12 @@ from app.schemas import (
     RecommendRequest,
     RecommendResponse,
     RecommendedItem,
+    YarnRequest,
+    YarnResponse,
 )
 from app.services.data_store import DataStore, get_data_store
 from app.services.evaluation import fixture_metrics
-from app.services.generation import generate_recommendation_summary, generate_review_text
+from app.services.generation import generate_recommendation_summary, generate_review_text, generate_yarn_text
 from app.services.scoring import predict_rating, rank_products, retrieve_evidence
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -161,6 +163,27 @@ async def recommend(
         items=items,
         reasoning=summary,
         llm_provider=settings.llm_provider,
+        fallback_used=fallback_used,
+    )
+
+
+@app.post("/api/v1/yarn", response_model=YarnResponse)
+async def yarn_mode(
+    request: YarnRequest,
+    settings: Settings = Depends(get_settings),
+) -> YarnResponse:
+    script, note, fallback_used = await generate_yarn_text(
+        settings,
+        request.user_persona,
+        request.source_text,
+        request.mode,
+        request.task,
+    )
+    return YarnResponse(
+        mode=request.mode,
+        voice_script=script,
+        audio_hint="Use the Read Aloud button in the browser for a spoken demo.",
+        judge_note=note,
         fallback_used=fallback_used,
     )
 

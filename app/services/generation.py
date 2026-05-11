@@ -16,6 +16,11 @@ class RecommendationDraft(BaseModel):
     summary: str = Field(min_length=35, max_length=700)
 
 
+class YarnDraft(BaseModel):
+    voice_script: str = Field(min_length=20, max_length=900)
+    judge_note: str = Field(min_length=20, max_length=500)
+
+
 def _json_object(text: str | None) -> dict | None:
     if not text:
         return None
@@ -69,6 +74,40 @@ def fallback_recommendation_summary(persona: UserPersona, context: str) -> str:
         f"Ranked items{context_line} by matching {persona.name}'s history, stated likes, "
         f"budget level, category affinity, and cold-start product quality signals."
     )
+
+
+def fallback_yarn(source_text: str, mode: str, persona: UserPersona, task: str) -> tuple[str, str]:
+    compressed = " ".join(source_text.split())
+    if len(compressed) > 330:
+        compressed = compressed[:327].rstrip() + "..."
+    mode_lower = mode.lower()
+    if "pidgin" in mode_lower:
+        script = (
+            f"See wetin the agent find for {persona.name}: {compressed} "
+            "The main thing be say the recommendation follow the person taste, budget, and past choices."
+        )
+    elif "yoruba" in mode_lower:
+        script = (
+            f"For {persona.name}, this result is saying: {compressed} "
+            "O da bi pe the system considered taste, price, and everyday usefulness."
+        )
+    elif "hausa" in mode_lower:
+        script = (
+            f"For {persona.name}, ga abin da system din ya nuna: {compressed} "
+            "It keeps the shopper's taste, budget, and practical need in view."
+        )
+    elif "igbo" in mode_lower:
+        script = (
+            f"For {persona.name}, ihe the agent is saying is this: {compressed} "
+            "It follows what the person likes, what they avoid, and what gives value."
+        )
+    else:
+        script = (
+            f"Here is the judge-friendly voice version for {persona.name}: {compressed} "
+            "The key point is that the output is personalized from behavior, not generic."
+        )
+    note = f"{mode} voice layer for {task}: localized explanation without changing the model score."
+    return script, note
 
 
 async def generate_review_text(
@@ -157,3 +196,46 @@ async def generate_recommendation_summary(
         except ValidationError:
             pass
     return fallback_recommendation_summary(persona, context), True
+
+
+async def generate_yarn_text(
+    settings: Settings,
+    persona: UserPersona,
+    source_text: str,
+    mode: str,
+    task: str,
+) -> tuple[str, str, bool]:
+    client = GroqClient(settings)
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "You are a Nigerian localization layer for a demo called Yarn Mode. Return strict JSON only. "
+                "Schema: {\"voice_script\":\"short spoken explanation\", \"judge_note\":\"why this helps evaluation\"}. "
+                "Use the requested mode lightly and respectfully. Do not stereotype, invent facts, or change scores. "
+                "If mode asks for a Nigerian language, use accessible language-flavoured English rather than deep translation."
+            ),
+        },
+        {
+            "role": "user",
+            "content": (
+                f"Persona: {PersonaSummary(persona).describe_for_prompt()}\n"
+                f"Mode: {mode}\nTask: {task}\nSource text: {source_text}\n"
+                "Create a 45-90 word spoken script and a 20-45 word judge note. Output JSON only."
+            ),
+        },
+    ]
+    generated = await client.chat(
+        messages,
+        temperature=0.35,
+        response_format={"type": "json_object"},
+    )
+    parsed = _json_object(generated)
+    if parsed:
+        try:
+            draft = YarnDraft.model_validate(parsed)
+            return " ".join(draft.voice_script.split()), " ".join(draft.judge_note.split()), False
+        except ValidationError:
+            pass
+    script, note = fallback_yarn(source_text, mode, persona, task)
+    return script, note, True

@@ -5,6 +5,21 @@ from app.schemas import EvidenceItem, ProductDetails, UserPersona
 from app.services.persona import PersonaSummary
 from app.services.text_utils import clamp, cosine_counter, keyword_set, stable_round, tokenize
 
+STOPWORDS = {
+    "and",
+    "the",
+    "for",
+    "with",
+    "this",
+    "that",
+    "from",
+    "into",
+    "user",
+    "nigeria",
+    "nigerian",
+    "shopper",
+}
+
 
 def product_tokens(product: ProductDetails | dict[str, Any]) -> set[str]:
     if isinstance(product, ProductDetails):
@@ -130,7 +145,9 @@ def rank_products(
             - 0.22 * dislike_match
             - budget_penalty
         )
-        matched_preferences = sorted((tokens & preference_tokens) - {"nigeria", "nigerian"})[:5]
+        matched_preferences = sorted(
+            token for token in (tokens & preference_tokens) if token not in STOPWORDS and len(token) > 2
+        )[:5]
         ranked.append(
             {
                 **product,

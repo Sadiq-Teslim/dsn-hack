@@ -76,6 +76,13 @@ curl -X POST http://127.0.0.1:8000/api/v1/recommend ^
   -d @examples/recommend.json
 ```
 
+### Yarn Mode
+
+`POST /api/v1/yarn` converts a generated review or recommendation explanation into a localized,
+voice-ready Nigerian explanation. The UI exposes this as **Yarn Mode** with browser read-aloud.
+Available modes include Nigerian Pidgin, Yoruba-flavoured English, Hausa-flavoured English,
+Igbo-flavoured English, and a formal judge summary.
+
 ## Solution Paper
 
 The paper deliverable is a Word document at `docs/BCT_Solution_Paper.docx`.

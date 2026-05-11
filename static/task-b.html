@@ -30,7 +30,7 @@
       <section class="mb-8 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
         <div>
           <span class="pill"><span class="dot" data-health-dot></span><span data-health-text>Checking service</span></span>
-          <p class="mt-7 text-sm font-black uppercase text-[#34A853]">Task B · Recommendation</p>
+          <p class="mt-7 text-sm font-black uppercase text-[#34A853]">Task B / Recommendation</p>
           <h1 class="mt-2 max-w-4xl text-5xl font-black leading-none text-slate-950 md:text-7xl">
             Rank items around a person's real context.
           </h1>
@@ -63,6 +63,33 @@
               <button class="tag" data-context="I am shopping for family-friendly home use and guests this weekend.">Family weekend</button>
             </div>
           </div>
+
+          <article id="yarn-card" class="yarn-panel">
+            <div class="flex items-center gap-3">
+              <span class="voice-bars" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+              <div>
+                <p class="text-sm font-black uppercase text-slate-500">Yarn Mode</p>
+                <h2 class="text-2xl font-black text-slate-950">Explain the ranking like a local voice note</h2>
+              </div>
+            </div>
+            <div class="yarn-controls mt-5">
+              <label class="block">
+                <span class="field-label">Voice style</span>
+                <select id="yarn-mode" class="select">
+                  <option>Nigerian Pidgin</option>
+                  <option>Yoruba-flavoured English</option>
+                  <option>Hausa-flavoured English</option>
+                  <option>Igbo-flavoured English</option>
+                  <option>Formal judge summary</option>
+                </select>
+              </label>
+              <button id="generate-yarn" class="button-secondary" type="button" disabled>Yarn It</button>
+              <button id="speak-yarn" class="button-primary" type="button" disabled>Read Aloud</button>
+            </div>
+            <div id="yarn-result" class="mt-5 rounded-3xl bg-white p-5 text-slate-700">
+              Generate recommendations first.
+            </div>
+          </article>
 
           <article id="recommend-result" class="panel result-box p-6">
             <div class="flex h-full min-h-[360px] items-center justify-center rounded-[22px] bg-slate-50 p-8 text-center">
