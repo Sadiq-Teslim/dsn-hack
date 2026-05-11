@@ -462,9 +462,19 @@ div {
 
 .yarn-controls {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr) auto auto;
   gap: 10px;
   align-items: end;
+}
+
+#yarn-audio {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}
+
+#yarn-audio[hidden] {
+  display: none;
 }
 
 .voice-bars {

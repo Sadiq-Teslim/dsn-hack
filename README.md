@@ -54,6 +54,7 @@ Set this secret in the Render dashboard:
 
 ```env
 GROQ_API_KEY=your_groq_key
+YARNGPT_API_KEY=your_yarngpt_key
 ```
 
 `GROQ_API_KEY` is intentionally marked `sync: false` in `render.yaml`, so the key is never committed to git.
@@ -82,6 +83,10 @@ curl -X POST http://127.0.0.1:8000/api/v1/recommend ^
 voice-ready Nigerian explanation. The UI exposes this as **Yarn Mode** with browser read-aloud.
 Available modes include Nigerian Pidgin, Yoruba-flavoured English, Hausa-flavoured English,
 Igbo-flavoured English, and a formal judge summary.
+
+When `YARNGPT_API_KEY` is set, `POST /api/v1/yarn-tts` sends the Yarn Mode text to hosted
+YarnGPT TTS and returns playable `mp3` audio to the browser. If the key is missing, the UI falls
+back to browser speech synthesis.
 
 ## Solution Paper
 

@@ -96,6 +96,20 @@ class YarnResponse(BaseModel):
     fallback_used: bool
 
 
+class YarnTTSRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=2000)
+    voice: str = "Idera"
+    response_format: str = "mp3"
+
+
+class YarnTTSResponse(BaseModel):
+    audio_data_url: str | None
+    voice: str
+    response_format: str
+    fallback_used: bool
+    message: str
+
+
 class DemoPersona(BaseModel):
     id: str
     label: str
@@ -107,6 +121,7 @@ class HealthResponse(BaseModel):
     app: str
     llm_provider: str
     groq_configured: bool
+    yarngpt_configured: bool = False
 
 
 class EvaluationMetrics(BaseModel):

@@ -17,11 +17,14 @@ from app.schemas import (
     RecommendedItem,
     YarnRequest,
     YarnResponse,
+    YarnTTSRequest,
+    YarnTTSResponse,
 )
 from app.services.data_store import DataStore, get_data_store
 from app.services.evaluation import fixture_metrics
 from app.services.generation import generate_recommendation_summary, generate_review_text, generate_yarn_text
 from app.services.scoring import predict_rating, rank_products, retrieve_evidence
+from app.services.yarngpt_client import YarnGPTClient
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "static"
@@ -70,6 +73,7 @@ async def health(settings: Settings = Depends(get_settings)) -> HealthResponse:
         app=settings.app_name,
         llm_provider=settings.llm_provider,
         groq_configured=bool(settings.groq_api_key),
+        yarngpt_configured=bool(settings.yarngpt_api_key),
     )
 
 
@@ -185,6 +189,26 @@ async def yarn_mode(
         audio_hint="Use the Read Aloud button in the browser for a spoken demo.",
         judge_note=note,
         fallback_used=fallback_used,
+    )
+
+
+@app.post("/api/v1/yarn-tts", response_model=YarnTTSResponse)
+async def yarn_tts(
+    request: YarnTTSRequest,
+    settings: Settings = Depends(get_settings),
+) -> YarnTTSResponse:
+    client = YarnGPTClient(settings)
+    audio_data_url, message = await client.text_to_speech(
+        request.text,
+        request.voice,
+        request.response_format,
+    )
+    return YarnTTSResponse(
+        audio_data_url=audio_data_url,
+        voice=request.voice,
+        response_format=request.response_format,
+        fallback_used=audio_data_url is None,
+        message=message,
     )
 
 

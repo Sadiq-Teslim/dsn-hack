@@ -9,6 +9,10 @@ class Settings(BaseSettings):
     groq_api_key: str | None = None
     groq_model: str = "llama-3.1-8b-instant"
     groq_base_url: str = "https://api.groq.com/openai/v1"
+    yarngpt_api_key: str | None = None
+    yarngpt_base_url: str = "https://yarngpt.ai/api/v1"
+    yarngpt_voice: str = "Idera"
+    yarngpt_response_format: str = "mp3"
     llm_timeout_seconds: float = 12.0
     data_path: str = "data/fixtures"
     cors_origins: list[str] = ["*"]

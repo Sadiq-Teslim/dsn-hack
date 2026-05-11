@@ -111,9 +111,31 @@
                     <option>Formal judge summary</option>
                   </select>
                 </label>
+                <label class="block">
+                  <span class="field-label">YarnGPT voice</span>
+                  <select id="yarngpt-voice" class="select">
+                    <option>Idera</option>
+                    <option>Emma</option>
+                    <option>Zainab</option>
+                    <option>Osagie</option>
+                    <option>Wura</option>
+                    <option>Jude</option>
+                    <option>Chinenye</option>
+                    <option>Tayo</option>
+                    <option>Regina</option>
+                    <option>Femi</option>
+                    <option>Adaora</option>
+                    <option>Umar</option>
+                    <option>Mary</option>
+                    <option>Nonso</option>
+                    <option>Remi</option>
+                    <option>Adam</option>
+                  </select>
+                </label>
                 <button id="generate-yarn" class="button-secondary" type="button" disabled>Yarn It</button>
-                <button id="speak-yarn" class="button-primary" type="button" disabled>Read Aloud</button>
+                <button id="speak-yarn" class="button-primary" type="button" disabled>Generate Audio</button>
               </div>
+              <audio id="yarn-audio" class="mt-4" controls hidden></audio>
               <div id="yarn-result" class="mt-5 rounded-3xl bg-white p-5 text-slate-700">
                 Generate a review first.
               </div>

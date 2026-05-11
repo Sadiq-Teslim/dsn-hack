@@ -15,3 +15,5 @@ services:
         value: data/fixtures
       - key: GROQ_API_KEY
         sync: false
+      - key: YARNGPT_API_KEY
+        sync: false

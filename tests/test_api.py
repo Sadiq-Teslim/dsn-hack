@@ -88,3 +88,19 @@ def test_yarn_mode_endpoint_returns_voice_script() -> None:
     assert payload["voice_script"]
     assert payload["judge_note"]
     assert payload["mode"] == "Nigerian Pidgin"
+
+
+def test_yarngpt_tts_falls_back_without_key() -> None:
+    response = client.post(
+        "/api/v1/yarn-tts",
+        json={
+            "text": "This is a short local voice test.",
+            "voice": "Idera",
+            "response_format": "mp3",
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["audio_data_url"] is None
+    assert payload["fallback_used"] is True
+    assert payload["voice"] == "Idera"

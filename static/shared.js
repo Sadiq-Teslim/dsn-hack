@@ -111,6 +111,37 @@ function readAloud(text) {
   return true;
 }
 
+async function generateYarnAudio(text, voice) {
+  return api("/api/v1/yarn-tts", {
+    method: "POST",
+    body: JSON.stringify({
+      text,
+      voice,
+      response_format: "mp3",
+    }),
+  });
+}
+
+async function playYarnAudio(text, voice, audioElement, statusElement) {
+  statusElement.innerHTML += `<p class="mt-3 text-slate-500">Generating hosted YarnGPT audio...</p>`;
+  let payload;
+  try {
+    payload = await generateYarnAudio(text, voice);
+  } catch (error) {
+    statusElement.innerHTML += `<p class="mt-3 text-slate-500">YarnGPT audio request failed. Falling back to browser speech.</p>`;
+    return readAloud(text);
+  }
+  if (payload.audio_data_url) {
+    audioElement.src = payload.audio_data_url;
+    audioElement.hidden = false;
+    await audioElement.play().catch(() => {});
+    statusElement.innerHTML += `<p class="mt-3 text-emerald-700">YarnGPT audio ready with ${escapeHtml(payload.voice)}.</p>`;
+    return true;
+  }
+  statusElement.innerHTML += `<p class="mt-3 text-slate-500">${escapeHtml(payload.message)} Falling back to browser speech.</p>`;
+  return readAloud(text);
+}
+
 function renderYarnResult(container, payload) {
   container.innerHTML = `
     <p class="text-sm font-black uppercase text-slate-500">${escapeHtml(payload.mode)}</p>
@@ -133,5 +164,7 @@ window.AgentApp = {
   bindNavigation,
   personaSummary,
   readAloud,
+  generateYarnAudio,
+  playYarnAudio,
   renderYarnResult,
 };

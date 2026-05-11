@@ -7,7 +7,7 @@ const {
   bindPersonaSelect,
   bindNavigation,
   personaSummary,
-  readAloud,
+  playYarnAudio,
   renderYarnResult,
 } = window.AgentApp;
 
@@ -120,9 +120,17 @@ async function init() {
   $("generate-review").addEventListener("click", generateReview);
   $("generate-yarn").addEventListener("click", generateYarn);
   $("speak-yarn").addEventListener("click", () => {
-    if (!readAloud(latestYarnText)) {
+    const played = playYarnAudio(
+      latestYarnText,
+      $("yarngpt-voice").value,
+      $("yarn-audio"),
+      $("yarn-result"),
+    );
+    Promise.resolve(played).then((ok) => {
+      if (!ok) {
       $("yarn-result").innerHTML += `<p class="mt-3 text-red-700">This browser does not support speech synthesis.</p>`;
-    }
+      }
+    });
   });
 }
 
