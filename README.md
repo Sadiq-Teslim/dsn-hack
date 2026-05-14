@@ -97,7 +97,7 @@ Voice input uses the browser Speech Recognition API and falls back to normal typ
 
 ## Solution Paper
 
-The paper deliverable is a Word document at `docs/BCT_Solution_Paper.docx`.
+The paper deliverable is a Word document at `docs/BCT_Solution_Paper_Team_Ace.docx`.
 
 Regenerate it with:
 

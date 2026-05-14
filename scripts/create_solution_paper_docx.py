@@ -13,7 +13,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT = ROOT / "docs" / "BCT_Solution_Paper.docx"
+OUTPUT = ROOT / "docs" / "BCT_Solution_Paper_Team_Ace.docx"
 ASSET_DIR = ROOT / "docs" / "assets"
 EVAL_REPORT = ROOT / "docs" / "evaluation_report.json"
 SUBSET_METRICS = (
@@ -22,11 +22,9 @@ SUBSET_METRICS = (
     else ROOT / "data" / "amazon_smoke" / "subset_metrics.json"
 )
 
-ACCENT = RGBColor(36, 89, 77)
-BURGUNDY = RGBColor(127, 29, 45)
-MUTED = RGBColor(95, 91, 83)
-LIGHT_FILL = "F7F1E8"
-HEADER_FILL = "EDE3D3"
+BLACK = RGBColor(0, 0, 0)
+LIGHT_FILL = "F2F2F2"
+HEADER_FILL = "E6E6E6"
 
 
 def set_cell_shading(cell, fill: str) -> None:
@@ -49,7 +47,7 @@ def set_cell_width(cell, width_inches: float) -> None:
     tc_w.set(qn("w:type"), "dxa")
 
 
-def set_cell_margins(cell, top=90, start=120, bottom=90, end=120) -> None:
+def set_cell_margins(cell, top=60, start=95, bottom=60, end=95) -> None:
     tc_pr = cell._tc.get_or_add_tcPr()
     tc_mar = tc_pr.first_child_found_in("w:tcMar")
     if tc_mar is None:
@@ -83,7 +81,7 @@ def add_page_number(paragraph) -> None:
     paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
     run = paragraph.add_run("Page ")
     run.font.size = Pt(9)
-    run.font.color.rgb = MUTED
+    run.font.color.rgb = BLACK
     fld_begin = OxmlElement("w:fldChar")
     fld_begin.set(qn("w:fldCharType"), "begin")
     instr = OxmlElement("w:instrText")
@@ -100,27 +98,28 @@ def configure_styles(document: Document) -> None:
     styles = document.styles
     normal = styles["Normal"]
     normal.font.name = "Arial"
-    normal.font.size = Pt(10.8)
-    normal.paragraph_format.line_spacing = 1.08
-    normal.paragraph_format.space_after = Pt(6)
+    normal.font.size = Pt(9.0)
+    normal.font.color.rgb = BLACK
+    normal.paragraph_format.line_spacing = 1.0
+    normal.paragraph_format.space_after = Pt(2.5)
 
-    for style_name, size, color in [
-        ("Title", 22, BURGUNDY),
-        ("Subtitle", 12, MUTED),
-        ("Heading 1", 16, ACCENT),
-        ("Heading 2", 13, BURGUNDY),
-        ("Heading 3", 11.5, ACCENT),
+    for style_name, size in [
+        ("Title", 22),
+        ("Subtitle", 11),
+        ("Heading 1", 14),
+        ("Heading 2", 12),
+        ("Heading 3", 10.5),
     ]:
         style = styles[style_name]
         style.font.name = "Arial"
         style.font.size = Pt(size)
         style.font.bold = style_name != "Subtitle"
-        style.font.color.rgb = color
+        style.font.color.rgb = BLACK
 
-    styles["Heading 1"].paragraph_format.space_before = Pt(12)
-    styles["Heading 1"].paragraph_format.space_after = Pt(6)
-    styles["Heading 2"].paragraph_format.space_before = Pt(9)
-    styles["Heading 2"].paragraph_format.space_after = Pt(4)
+    styles["Heading 1"].paragraph_format.space_before = Pt(8)
+    styles["Heading 1"].paragraph_format.space_after = Pt(3)
+    styles["Heading 2"].paragraph_format.space_before = Pt(6)
+    styles["Heading 2"].paragraph_format.space_after = Pt(2)
 
 
 def add_running_header_footer(document: Document) -> None:
@@ -132,14 +131,14 @@ def add_running_header_footer(document: Document) -> None:
     paragraph.alignment = WD_ALIGN_PARAGRAPH.LEFT
     for run in paragraph.runs:
         run.font.size = Pt(8.5)
-        run.font.color.rgb = MUTED
+        run.font.color.rgb = BLACK
 
     border = OxmlElement("w:pBdr")
     bottom = OxmlElement("w:bottom")
     bottom.set(qn("w:val"), "single")
     bottom.set(qn("w:sz"), "6")
     bottom.set(qn("w:space"), "4")
-    bottom.set(qn("w:color"), "CFC1AD")
+    bottom.set(qn("w:color"), "000000")
     border.append(bottom)
     paragraph._p.get_or_add_pPr().append(border)
 
@@ -195,18 +194,50 @@ def add_table(document: Document, headers: list[str], rows: list[list[str]], wid
             cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
 
 
+def add_section_break(document: Document) -> None:
+    document.add_page_break()
+
+
 def add_bullets(document: Document, items: list[str]) -> None:
     for item in items:
         paragraph = document.add_paragraph(style="List Bullet")
-        paragraph.paragraph_format.space_after = Pt(5)
+        paragraph.paragraph_format.space_after = Pt(2.5)
         paragraph.add_run(item)
 
 
 def add_numbered(document: Document, items: list[str]) -> None:
     for item in items:
         paragraph = document.add_paragraph(style="List Number")
-        paragraph.paragraph_format.space_after = Pt(5)
+        paragraph.paragraph_format.space_after = Pt(2.5)
         paragraph.add_run(item)
+
+
+def add_pull_quote(document: Document, text: str) -> None:
+    paragraph = document.add_paragraph()
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    paragraph.paragraph_format.space_before = Pt(6)
+    paragraph.paragraph_format.space_after = Pt(8)
+    run = paragraph.add_run(text)
+    run.bold = True
+    run.italic = True
+    run.font.size = Pt(14)
+    run.font.color.rgb = BLACK
+
+
+def enforce_black_text(document: Document) -> None:
+    parts = [document]
+    for section in document.sections:
+        parts.extend([section.header, section.footer])
+    for part in parts:
+        for paragraph in part.paragraphs:
+            for run in paragraph.runs:
+                run.font.color.rgb = BLACK
+        for table in part.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    for paragraph in cell.paragraphs:
+                        for run in paragraph.runs:
+                            run.font.color.rgb = BLACK
 
 
 def load_json(path: Path) -> dict:
@@ -229,23 +260,20 @@ def make_architecture_diagram() -> Path:
     except OSError:
         title_font = box_font = body_font = ImageFont.load_default()
 
-    draw.text((60, 45), "Agent Architecture", fill=(15, 23, 42), font=title_font)
+    draw.text((60, 45), "Agent Studio Architecture", fill=(0, 0, 0), font=title_font)
     boxes = [
-        ((70, 150, 360, 330), "Inputs", ["User persona", "Product details", "Context prompt"]),
-        ((460, 150, 750, 330), "Persona Memory", ["Rating bias", "Category affinity", "Likes/dislikes"]),
-        ((850, 150, 1140, 330), "Local Models", ["Rating ensemble", "Candidate ranker", "Cold-start logic"]),
-        ((1240, 150, 1530, 330), "Groq JSON Layer", ["Validated review", "Validated summary", "Safe fallback"]),
-        ((460, 455, 750, 635), "Retrieval", ["Similar history", "Behavioral evidence", "Tone examples"]),
-        ((850, 455, 1140, 635), "Outputs", ["Task A review", "Task B ranking", "Metrics and paper"]),
+        ((70, 150, 360, 330), "Persona Inputs", ["User profile", "Product details", "Context prompt"]),
+        ((460, 150, 750, 330), "Behavioral Memory", ["Rating bias", "Category affinity", "Likes/dislikes"]),
+        ((850, 150, 1140, 330), "Local Engine", ["Rating ensemble", "Candidate ranker", "Cold-start logic"]),
+        ((1240, 150, 1530, 330), "Groq Layer", ["Review fluency", "Explanations", "Safe fallback"]),
+        ((460, 455, 750, 635), "Retrieval", ["Similar history", "Evidence", "Tone examples"]),
+        ((850, 455, 1140, 635), "Judge Outputs", ["Task A review", "Task B ranking", "Metrics report"]),
     ]
-    colors = [(66, 133, 244), (52, 168, 83), (251, 188, 4), (234, 67, 53), (36, 89, 77), (127, 29, 45)]
-    for index, (rect, title, lines) in enumerate(boxes):
-        fill = (248, 250, 252)
-        outline = colors[index]
-        draw.rounded_rectangle(rect, radius=28, fill=fill, outline=outline, width=5)
-        draw.text((rect[0] + 24, rect[1] + 22), title, fill=(15, 23, 42), font=box_font)
+    for rect, title, lines in boxes:
+        draw.rounded_rectangle(rect, radius=24, fill=(247, 247, 247), outline=(0, 0, 0), width=4)
+        draw.text((rect[0] + 24, rect[1] + 22), title, fill=(0, 0, 0), font=box_font)
         for line_index, line in enumerate(lines):
-            draw.text((rect[0] + 28, rect[1] + 72 + line_index * 32), f"- {line}", fill=(71, 85, 105), font=body_font)
+            draw.text((rect[0] + 28, rect[1] + 72 + line_index * 32), f"- {line}", fill=(0, 0, 0), font=body_font)
 
     arrows = [
         ((360, 240), (460, 240)),
@@ -256,8 +284,86 @@ def make_architecture_diagram() -> Path:
         ((995, 330), (995, 455)),
     ]
     for start, end in arrows:
-        draw.line([start, end], fill=(100, 116, 139), width=5)
-        draw.ellipse((end[0] - 8, end[1] - 8, end[0] + 8, end[1] + 8), fill=(100, 116, 139))
+        draw.line([start, end], fill=(0, 0, 0), width=4)
+        draw.ellipse((end[0] - 7, end[1] - 7, end[0] + 7, end[1] + 7), fill=(0, 0, 0))
+    image.save(path)
+    return path
+
+
+def make_cover_visual() -> Path:
+    ASSET_DIR.mkdir(parents=True, exist_ok=True)
+    path = ASSET_DIR / "cover_visual.png"
+    image = Image.new("RGB", (1600, 760), "white")
+    draw = ImageDraw.Draw(image)
+    try:
+        title_font = ImageFont.truetype("arialbd.ttf", 30)
+        body_font = ImageFont.truetype("arial.ttf", 22)
+        small_font = ImageFont.truetype("arial.ttf", 18)
+    except OSError:
+        title_font = body_font = small_font = ImageFont.load_default()
+
+    draw.rectangle((0, 0, 799, 760), fill=(244, 244, 244))
+    draw.rectangle((800, 0, 1600, 760), fill=(255, 255, 255))
+    draw.line((800, 40, 800, 720), fill=(0, 0, 0), width=5)
+
+    draw.text((90, 70), "Nigerian user context", fill=(0, 0, 0), font=title_font)
+    draw.ellipse((315, 170, 465, 320), outline=(0, 0, 0), width=6)
+    draw.rounded_rectangle((255, 325, 525, 610), radius=45, outline=(0, 0, 0), width=6)
+    draw.rectangle((120, 590, 650, 630), fill=(0, 0, 0))
+    draw.line((140, 640, 620, 640), fill=(0, 0, 0), width=3)
+    draw.arc((90, 535, 230, 675), 180, 350, fill=(0, 0, 0), width=5)
+    draw.rounded_rectangle((535, 255, 675, 485), radius=18, outline=(0, 0, 0), width=5)
+    draw.line((555, 315, 655, 315), fill=(0, 0, 0), width=3)
+    draw.line((555, 355, 635, 355), fill=(0, 0, 0), width=3)
+    draw.text((115, 670), "Lagos student - budget, culture, routine, voice", fill=(0, 0, 0), font=body_font)
+
+    draw.text((890, 70), "Dynamic agent interface", fill=(0, 0, 0), font=title_font)
+    draw.rounded_rectangle((930, 150, 1480, 620), radius=28, outline=(0, 0, 0), width=5, fill=(248, 248, 248))
+    draw.rounded_rectangle((975, 205, 1435, 315), radius=18, outline=(0, 0, 0), width=3, fill=(255, 255, 255))
+    draw.text((1005, 228), "Task A: 4.7 / 5", fill=(0, 0, 0), font=body_font)
+    draw.text((1005, 268), "Grounded review generated", fill=(0, 0, 0), font=small_font)
+    draw.rounded_rectangle((975, 355, 1435, 500), radius=18, outline=(0, 0, 0), width=3, fill=(255, 255, 255))
+    draw.text((1005, 382), "Task B: ranked recommendations", fill=(0, 0, 0), font=body_font)
+    for idx, width in enumerate([340, 295, 255]):
+        y = 428 + idx * 32
+        draw.rectangle((1008, y, 1008 + width, y + 10), fill=(0, 0, 0))
+    draw.line((805, 380, 930, 380), fill=(0, 0, 0), width=5)
+    draw.polygon([(930, 380), (900, 362), (900, 398)], fill=(0, 0, 0))
+    draw.text((900, 670), "Behavior flows into auditable review + recommendation decisions", fill=(0, 0, 0), font=body_font)
+    image.save(path)
+    return path
+
+
+def make_ablation_chart(eval_report: dict) -> Path:
+    ASSET_DIR.mkdir(parents=True, exist_ok=True)
+    path = ASSET_DIR / "ablation_results.png"
+    image = Image.new("RGB", (1400, 700), "white")
+    draw = ImageDraw.Draw(image)
+    try:
+        title_font = ImageFont.truetype("arialbd.ttf", 34)
+        body_font = ImageFont.truetype("arial.ttf", 22)
+        label_font = ImageFont.truetype("arialbd.ttf", 22)
+    except OSError:
+        title_font = body_font = label_font = ImageFont.load_default()
+
+    draw.text((70, 50), "Ablation Results: Personalized Model vs Baselines", fill=(0, 0, 0), font=title_font)
+    metrics = [
+        ("Task A RMSE", eval_report.get("task_a", {}).get("global_mean_rmse", 1.3133), eval_report.get("task_a", {}).get("personalized_rmse", 0.7357), "lower is better"),
+        ("Task B NDCG@10", eval_report.get("task_b", {}).get("popularity_ndcg_at_10", 0.0194), eval_report.get("task_b", {}).get("personalized_ndcg_at_10", 0.0481), "higher is better"),
+        ("Task B Hit Rate@10", eval_report.get("task_b", {}).get("popularity_hit_rate_at_10", 0.0349), eval_report.get("task_b", {}).get("personalized_hit_rate_at_10", 0.1163), "higher is better"),
+    ]
+    max_values = [1.4, 0.12, 0.12]
+    for idx, (label, baseline, personalized, note) in enumerate(metrics):
+        y = 150 + idx * 160
+        draw.text((80, y), label, fill=(0, 0, 0), font=label_font)
+        draw.text((80, y + 35), note, fill=(0, 0, 0), font=body_font)
+        base_len = int((baseline / max_values[idx]) * 780)
+        pers_len = int((personalized / max_values[idx]) * 780)
+        draw.rectangle((420, y + 5, 420 + base_len, y + 42), fill=(190, 190, 190), outline=(0, 0, 0))
+        draw.rectangle((420, y + 62, 420 + pers_len, y + 99), fill=(0, 0, 0), outline=(0, 0, 0))
+        draw.text((1225, y + 8), f"base {baseline:.4f}", fill=(0, 0, 0), font=body_font)
+        draw.text((1225, y + 65), f"ours {personalized:.4f}", fill=(0, 0, 0), font=body_font)
+    draw.text((420, 645), "Grey = baseline     Black = Team Ace personalized model", fill=(0, 0, 0), font=body_font)
     image.save(path)
     return path
 
@@ -269,10 +375,11 @@ def add_image(document: Document, path: Path, caption: str, width: float = 6.45)
     paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = paragraph.add_run()
     run.add_picture(str(path), width=Inches(width))
-    caption_paragraph = document.add_paragraph(caption)
-    caption_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    caption_paragraph.runs[0].font.size = Pt(9)
-    caption_paragraph.runs[0].font.color.rgb = MUTED
+    if caption:
+        caption_paragraph = document.add_paragraph(caption)
+        caption_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        caption_paragraph.runs[0].font.size = Pt(9)
+        caption_paragraph.runs[0].font.color.rgb = BLACK
 
 
 def add_side_by_side_images(document: Document, left_path: Path, right_path: Path, caption: str) -> None:
@@ -289,7 +396,7 @@ def add_side_by_side_images(document: Document, left_path: Path, right_path: Pat
     caption_paragraph = document.add_paragraph(caption)
     caption_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
     caption_paragraph.runs[0].font.size = Pt(9)
-    caption_paragraph.runs[0].font.color.rgb = MUTED
+    caption_paragraph.runs[0].font.color.rgb = BLACK
 
 
 def build_document() -> None:
@@ -298,107 +405,147 @@ def build_document() -> None:
     section = document.sections[0]
     section.page_width = Inches(8.5)
     section.page_height = Inches(11)
-    section.top_margin = Inches(1)
-    section.bottom_margin = Inches(1)
-    section.left_margin = Inches(1)
-    section.right_margin = Inches(1)
+    section.top_margin = Inches(0.6)
+    section.bottom_margin = Inches(0.6)
+    section.left_margin = Inches(0.7)
+    section.right_margin = Inches(0.7)
+    section.different_first_page_header_footer = True
 
     configure_styles(document)
     add_running_header_footer(document)
 
-    title = document.add_paragraph(style="Title")
-    title.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    title.add_run("Dynamic User Modeling and Contextual Recommendation with LLM Agents")
-
-    subtitle = document.add_paragraph(style="Subtitle")
-    subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    subtitle.add_run("Solution paper for the DSN x BCT LLM Agent Challenge")
-
-    add_metadata_table(document)
-
     eval_report = load_json(EVAL_REPORT)
     subset_metrics = load_json(SUBSET_METRICS)
 
+    # Cover page
+    title = document.add_paragraph(style="Title")
+    title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    title.add_run("Dynamic User Modeling and Contextual Recommendation\nwith LLM Agents")
+
+    subtitle = document.add_paragraph(style="Subtitle")
+    subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    subtitle.add_run(
+        "Building Consistent, Auditable, and Deeply Nigerian-Aware Behavioral Agents "
+        "for Review Simulation and Personalization"
+    )
+    add_image(document, make_cover_visual(), "", width=5.95)
+
+    cover_lines = [
+        "Team Ace",
+        "Teslim Sadiq | Yasir Oyebo | Abiodun Mark",
+        "Contact: sadiqadetola08@gmail.com",
+        "Data & AI Summit Hackathon 3.0",
+        "DSN x BCT LLM Agent Challenge",
+        "May 2026",
+    ]
+    for index, line in enumerate(cover_lines):
+        paragraph = document.add_paragraph()
+        paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        paragraph.paragraph_format.space_after = Pt(1.5)
+        run = paragraph.add_run(line)
+        run.bold = index == 0
+        run.font.size = Pt(12 if index == 0 else 9.2)
+        run.font.color.rgb = BLACK
+
+    add_section_break(document)
+
+    # Page 2
     document.add_heading("Executive Summary", level=1)
     document.add_paragraph(
-        "This submission builds one deployable agent studio for both required tasks in the DSN x BCT "
-        "LLM Agent Challenge. The core idea is that users should not be represented as static profile "
-        "labels. They should be represented as changing behavioral traces: what they rate highly, which "
-        "tradeoffs they tolerate, how strongly budget matters, how they write, and what context makes "
-        "a recommendation useful. The application therefore shares one dynamic persona representation "
-        "across review simulation and recommendation ranking."
-    )
-    document.add_paragraph(
-        "The system combines local, reproducible scoring with retrieval-augmented Groq generation. "
-        "Local models decide ratings and recommendation order; Groq improves review fluency and "
-        "explanation quality after the structured decision has already been made. This separation keeps "
-        "the submission auditable for judges, measurable through offline scripts, and runnable even when "
-        "API keys are absent."
-    )
-    add_bullets(
-        document,
-        [
-            "Task A predicts a star rating from user bias, category affinity, item quality, keyword fit, and budget sensitivity, then generates a grounded review.",
-            "Task B ranks products across grocery, movies, games, and beauty using popularity, preference match, context match, category affinity, and cold-start fallbacks.",
-            "Nigerian context is represented through persona fields such as location, budget, language preference, family use cases, weekday routines, harmattan weather, and local media taste.",
-        ],
+        "In a world of static user profiles, Team Ace introduces dynamic behavioral personas: living "
+        "representations of users that evolve with every interaction, context, and cultural signal. "
+        "The submitted system is one unified agent studio that handles both challenge tasks through "
+        "the same behavioral memory core."
     )
     add_table(
         document,
-        ["Requirement", "Implemented Evidence", "Judge-Facing Path"],
+        ["Task", "What the Agent Does", "Output"],
         [
-            ["Task A", "Persona plus product inputs generate rating, review, confidence, reasoning, and evidence.", "/task-a and POST /api/v1/generate-review"],
-            ["Task B", "Persona plus context produces ranked recommendations with explanations and matched preferences.", "/task-b and POST /api/v1/recommend"],
-            ["Solution Paper", "This 4-8 page DOCX explains architecture, experiments, ablations, data, results, and limitations.", "docs/BCT_Solution_Paper.docx"],
-            ["Reproducibility", "Docker, Render config, tests, fixture data, real Amazon subset, and deterministic no-key fallback.", "README.md, Dockerfile, scripts/evaluate_dataset.py"],
+            ["Task A: User Modeling", "Predicts realistic star ratings and generates grounded, tone-aware reviews for unseen items.", "Rating, review, confidence, reasoning, evidence"],
+            ["Task B: Recommendation", "Produces contextual, cross-domain rankings that work for cold-start and history-rich users.", "Top recommendations, reasons, matched preferences"],
         ],
-        [1.35, 3.25, 1.9],
+        [1.65, 3.3, 2.0],
+    )
+    document.add_heading("What Makes Team Ace Different", level=2)
+    add_bullets(
+        document,
+        [
+            "Local transparent scoring makes decisions auditable before any LLM text is generated.",
+            "Groq is used as a controlled language layer for fluency, not as an opaque decision maker.",
+            "Nigerian context is treated as product-relevant behavior: budget pressure, family use, local routines, weather, language, and taste.",
+            "The app is production-minded: FastAPI, web UI, Docker/Render deployment, tests, real subset metrics, and no-key fallbacks.",
+        ],
+    )
+    if eval_report:
+        add_table(
+            document,
+            ["Key Result", "Team Ace", "Baseline", "Why It Matters"],
+            [
+                ["Task A RMSE", str(eval_report["task_a"]["personalized_rmse"]), str(eval_report["task_a"]["global_mean_rmse"]), "Lower error from user-aware rating behavior"],
+                ["Task B NDCG@10", str(eval_report["task_b"]["personalized_ndcg_at_10"]), str(eval_report["task_b"]["popularity_ndcg_at_10"]), "About 2.5x the popularity baseline"],
+                ["Reproducibility", "Container, tests, fallback", "Manual-only demos", "Judges can run and inspect the system"],
+            ],
+            [1.45, 1.2, 1.2, 2.9],
+        )
+
+    document.add_heading("1. Why Static Profiles Fail Nigerian Consumers", level=1)
+    document.add_paragraph(
+        "Real consumer behavior is dynamic, contextual, and culturally rich. A Lagos student may value "
+        "affordability, transport convenience, multiplayer entertainment, and quick meals in the same "
+        "week. An Abuja professional may care more about dependable weekday routines, heat-friendly "
+        "skincare, and polished media choices. A Port Harcourt family shopper may optimize for guests, "
+        "children, home use, and value packs. A static profile misses those shifts."
+    )
+    document.add_paragraph(
+        "Traditional recommenders are strong at repeated patterns but weak at explanation, cold-start, "
+        "and cross-domain context. Pure LLM systems can sound fluent but often hide the decision logic. "
+        "Our opportunity is to combine both: measurable behavioral intelligence first, controlled "
+        "language generation second."
+    )
+    add_pull_quote(document, "\"Users are not fixed vectors; they are changing stories.\"")
+
+    document.add_heading("2. Our Philosophy: Transparent Intelligence Meets Cultural Depth", level=1)
+    document.add_paragraph(
+        "Team Ace takes a hybrid agentic approach that stands apart from pure LLM sprawl and black-box "
+        "recommenders. The same persona object powers both tasks, but the architecture separates memory, "
+        "retrieval, scoring, generation, and evaluation."
+    )
+    add_table(
+        document,
+        ["Aspect", "Typical Solutions", "Team Ace Approach", "Advantage"],
+        [
+            ["Scoring", "Opaque LLM calls", "Local interpretable ensembles", "Auditable and reproducible"],
+            ["Language", "LLM does everything", "Groq only after decisions", "Controllable and consistent"],
+            ["User model", "Static embeddings", "Dynamic traces plus Nigerian signals", "Culturally relevant"],
+            ["Architecture", "Monolithic", "Bounded agentic workflow", "Reliable for judges"],
+        ],
+        [1.2, 1.7, 2.2, 1.7],
+    )
+    document.add_paragraph(
+        "The result is a system that is both measurable and human: numerical decisions are transparent, "
+        "while the final review and recommendation explanations still feel natural."
     )
 
-    document.add_heading("1. Problem Framing", level=1)
-    document.add_paragraph(
-        "Online reviews are compact records of behavior: users reveal what they value, how harshly "
-        "they rate products, which tradeoffs matter, and how context changes their choices. The "
-        "challenge is therefore not only to summarize past activity, but to simulate how a person "
-        "would react to an unseen item and what they are likely to choose next."
-    )
-    document.add_paragraph(
-        "Our design treats the persona as the shared memory object between both tasks. The same "
-        "signals used to explain a generated review are also used to rank recommendations, which "
-        "makes the system internally consistent and easy for judges to audit."
-    )
-    document.add_paragraph(
-        "A simple collaborative filter would be too narrow for this challenge because it can rank known "
-        "items but cannot easily explain why a Lagos student, an Abuja professional, or a family shopper "
-        "would respond differently to the same product. A pure LLM approach would have the opposite "
-        "problem: fluent language without stable scoring. The submitted approach sits between both "
-        "extremes. It uses transparent numerical features for behavioral decisions, then uses an LLM as "
-        "a controlled language layer."
-    )
+    add_section_break(document)
 
-    document.add_heading("2. Architecture", level=1)
+    document.add_heading("3. System Architecture", level=1)
     add_image(
         document,
         make_architecture_diagram(),
-        "Figure 1. The app keeps behavioral scoring local and uses Groq only after structured validation.",
+        "Figure 1. The Agent Studio keeps behavioral scoring local and uses Groq only after structured validation.",
+        width=6.65,
     )
     add_table(
         document,
         ["Layer", "Role", "Implementation"],
         [
-            ["Persona modeling", "Compress user history into behavior signals", "Rating bias, category affinity, likes/dislikes, budget level, tone, and Nigerian context fields"],
-            ["Retrieval", "Ground generation in prior behavior", "Nearest history items by category and keyword overlap"],
-            ["Rating model", "Predict Task A stars", "Weighted ensemble of item quality, user average, category affinity, preference overlap, dislike overlap, and budget adjustment"],
-            ["Recommender", "Rank Task B candidates", "Popularity, volume, category affinity, context match, preference match, dislike penalty, and budget fit"],
-            ["Generation", "Produce natural language", "Groq chat completions for final review/explanation, deterministic local fallback for reproducibility"],
+            ["Persona Modeling", "Compress history and context", "Rating bias, category affinity, likes/dislikes, budget, tone, location"],
+            ["Retrieval Memory", "Ground behavior", "Similar reviews by category, keywords, and user signals"],
+            ["Behavior Engine", "Make local decisions", "Rating ensemble and recommendation ranker"],
+            ["Groq Layer", "Improve language", "Validated review/explanation generation with fallback"],
+            ["UI/API/Eval", "Expose and measure", "FastAPI endpoints, web UI, metrics scripts, Docker/Render"],
         ],
-        [1.4, 2.0, 3.1],
-    )
-    document.add_paragraph(
-        "The Groq layer is deliberately separated from the ranking and rating logic. This prevents "
-        "the LLM from becoming an opaque scoring engine and keeps the metrics reproducible. Groq "
-        "improves fluency and explanation quality, while local models determine the behavioral "
-        "decision."
+        [1.35, 1.8, 3.35],
     )
     document.add_heading("Agentic Workflow", level=2)
     add_numbered(
@@ -411,28 +558,15 @@ def build_document() -> None:
             "Validate the response shape and fall back to deterministic local text when the hosted model is unavailable.",
         ],
     )
-    document.add_paragraph(
-        "This workflow is intentionally agentic but bounded. The agent reasons through memory, retrieval, "
-        "scoring, and explanation, yet every external output is tied back to explicit fields that can be "
-        "tested through the API."
-    )
 
-    document.add_heading("3. Dataset and Splitting Strategy", level=1)
+    add_section_break(document)
+
+    document.add_heading("4. Dataset Strategy and Experiments", level=1)
     document.add_paragraph(
         "The competition plan uses Amazon Reviews 2023 because it provides review text, ratings, user "
         "histories, item identifiers, and product categories at real platform scale. The repository now "
-        "ships two data tracks. First, a small curated cross-domain fixture gives judges an instant demo "
-        "without downloads. Second, a checked-in real Amazon Reviews 2023 subset supports measurable "
-        "experiments across the four target domains."
-    )
-    add_bullets(
-        document,
-        [
-            "Real subset domains: Grocery and Gourmet Food, Movies and TV, Video Games, and All Beauty.",
-            "Train/test construction: hold out each user's most recent interaction where enough history exists.",
-            "Metadata handling: official product metadata is used when available; bounded downloads fall back to review-derived product stubs so every real review remains runnable.",
-            "Cold-start support: when history is sparse, rely more heavily on item/category priors, popularity, context text, and stated persona preferences.",
-        ],
+        "ships two data tracks: curated cross-domain fixtures for instant demos and a checked-in real "
+        "Amazon Reviews 2023 subset for measurable experiments."
     )
     if subset_metrics:
         add_table(
@@ -446,17 +580,12 @@ def build_document() -> None:
                 ["Users", str(subset_metrics.get("users", "")), "Users contributing chronological behavior for train/test splits"],
                 ["Holdout", f"{subset_metrics.get('train_interactions', '')} train / {subset_metrics.get('test_interactions', '')} test", "Most recent interaction held out by user when possible"],
             ],
-            [1.55, 2.15, 2.8],
+            [1.45, 2.1, 3.0],
         )
-
-    document.add_heading("4. Experiments and Ablations", level=1)
     document.add_paragraph(
-        "The experiments are designed to answer a practical judge question: does the system understand "
-        "the user, or is it merely producing plausible text? Each baseline removes one source of "
-        "behavioral signal. Rating accuracy is measured with RMSE; ranking quality is measured with "
-        "NDCG@10 and Hit Rate@10. Review text quality can be scored with ROUGE-L/BERTScore when the "
-        "optional NLP metric dependencies are available, but the paper prioritizes behavioral ablations "
-        "because they are the clearest evidence of user modeling."
+        "Splitting holds out the most recent interaction for users with enough history. Cold-start "
+        "behavior leans more heavily on explicit persona preferences, category priors, popularity, "
+        "budget level, and context text."
     )
     add_table(
         document,
@@ -470,19 +599,49 @@ def build_document() -> None:
         ],
         [1.7, 2.4, 2.4],
     )
+    add_image(document, make_ablation_chart(eval_report), "Figure 2. Ablation chart comparing personalized models to baselines.", width=6.45)
+
+    add_section_break(document)
+
+    document.add_heading("5. Implementation and Technical Details", level=1)
     document.add_paragraph(
-        "The cold-start and cross-domain cases are especially important for the hackathon rubric. The "
-        "ranker does not require a user to have prior reviews in the same category. It can use explicit "
-        "persona fields, context text, budget level, category priors, and product popularity to make a "
-        "reasonable first recommendation, then become more personalized as history grows."
+        "The application is a single FastAPI service that serves the web UI and the REST API. Task A "
+        "uses POST /api/v1/generate-review. Task B uses POST /api/v1/recommend. The same service also "
+        "exposes /health, demo personas, evaluation outputs, Yarn Mode localization, and YarnGPT audio."
+    )
+    add_table(
+        document,
+        ["Component", "Implementation Detail"],
+        [
+            ["Backend", "FastAPI, Pydantic schemas, modular service layer, deterministic fallbacks"],
+            ["Task A", "User bias, item average, category affinity, text match, budget and dislike penalties"],
+            ["Task B", "Popularity, context match, preference match, diversity, cold-start and cross-domain ranking"],
+            ["LLM", "Groq improves review/explanation fluency after local scoring"],
+            ["Voice", "Browser speech input plus YarnGPT hosted audio for localized output"],
+        ],
+        [1.55, 4.95],
+    )
+    add_table(
+        document,
+        ["Persona", "Context Signal", "Behavioral Effect"],
+        [
+            ["Lagos student", "Low budget, classes, transport cost", "Quick meals, value picks, local comedy, multiplayer games"],
+            ["Abuja professional", "Work routine, heat, polished daily use", "Dependable coffee, political drama, lightweight skincare"],
+            ["Port Harcourt family shopper", "Visitors, children, home use", "Family-safe media, easy drinks, gentle skincare"],
+        ],
+        [1.65, 2.25, 2.6],
+    )
+    document.add_paragraph(
+        "Yarn Mode converts explanations into Nigerian Pidgin, Yoruba-flavoured English, Hausa-flavoured "
+        "English, Igbo-flavoured English, or a formal judge summary. This is an output layer, not a "
+        "scoring shortcut, so the underlying metrics remain stable."
     )
 
-    document.add_heading("5. Current Results", level=1)
+    document.add_heading("6. Results and Evaluation", level=1)
     document.add_paragraph(
-        "The repository includes both a hand-checkable fixture split and a real Amazon Reviews 2023 "
-        "multi-domain subset. The subset is intentionally bounded so it can be committed and inspected, "
-        "but it proves that the same code path can stream official data, normalize product candidates, "
-        "create chronological user splits, and compare personalized models against baselines."
+        "The real subset is intentionally bounded so the repository remains lightweight, but it proves "
+        "that the pipeline can stream official Amazon data, create chronological splits, and compare "
+        "personalized models against non-personalized baselines."
     )
     if eval_report:
         add_table(
@@ -505,84 +664,30 @@ def build_document() -> None:
                     "Task B Hit Rate@10",
                     str(eval_report["task_b"]["personalized_hit_rate_at_10"]),
                     str(eval_report["task_b"]["popularity_hit_rate_at_10"]),
-                    "Personalized ranker doubles recovery in the smoke subset",
+                    "More held-out items recovered in top 10",
                 ],
             ],
-            [1.8, 1.3, 1.3, 2.1],
-        )
-    else:
-        add_table(
-            document,
-            ["Metric", "Fixture Result", "Interpretation"],
-            [
-                ["Task A RMSE", "0.507", "Rating predictor is stable on the smoke split"],
-                ["Task A ROUGE-L", "0.418", "Placeholder fixture score unless optional NLP metrics are installed"],
-                ["Task B NDCG@10", "0.810", "Held-out items are ranked near the top"],
-                ["Task B Hit Rate@10", "1.000", "Every held-out item appears in the top ten"],
-            ],
-            [1.8, 1.4, 3.3],
+            [1.7, 1.25, 1.25, 2.3],
         )
     document.add_paragraph(
-        "The most important signal is not the absolute value of the smoke score; it is the direction "
-        "of the ablation. Personalized rating and ranking beat non-personalized baselines on the "
-        "same held-out interactions."
-    )
-    document.add_paragraph(
-        "The current ranking scores are modest because the checked-in subset is small and sparse, which "
-        "is expected for a lightweight repository artifact. The important result is that the personalized "
-        "ranker improves over popularity-only ranking while remaining interpretable. A larger subset "
-        "should increase candidate density and produce more stable NDCG values."
+        "The ranking values are modest because the checked-in subset is small and sparse. The key signal "
+        "is the direction of the ablation: personalization beats global rating and popularity baselines "
+        "while preserving interpretability."
     )
 
-    document.add_heading("6. Nigerian Contextualization", level=1)
-    document.add_paragraph(
-        "Nigerian context is used only where it changes value, convenience, budget, family use, "
-        "weather, or media taste."
-    )
-    add_table(
-        document,
-        ["Persona", "Context Signal", "Behavioral Effect"],
-        [
-            ["Lagos student", "Low budget, classes, transport cost", "Quick meals, value, local comedy, and multiplayer games"],
-            ["Abuja professional", "Work routine, heat, polished daily use", "Dependable coffee, political drama, and lightweight skincare"],
-        ],
-        [1.8, 2.3, 2.4],
-    )
-    document.add_paragraph(
-        "A third demo persona, a Port Harcourt family shopper, covers home use, visitors, children, "
-        "family-safe media, easy guest drinks, and gentle skincare."
-    )
-    document.add_paragraph(
-        "The application also adds a voice layer through YarnGPT. Judges can generate the standard "
-        "review or recommendation, convert the explanation into Nigerian Pidgin, Yoruba-flavoured "
-        "English, Hausa-flavoured English, Igbo-flavoured English, or a formal judge summary, and play "
-        "hosted audio when a YarnGPT key is configured. This does not change the underlying score; it "
-        "changes how the explanation is delivered to a local audience."
-    )
+    add_section_break(document)
 
-    document.add_heading("7. Product Demo Screens", level=1)
+    document.add_heading("7. Demo and Reproducibility", level=1)
     document.add_paragraph(
-        "The submitted application is designed for judge inspection. The landing page explains the "
-        "agent promise, Task A exposes the simulated review workflow, and Task B exposes the ranked "
-        "recommendation workflow."
+        "The submitted application is designed for judge inspection. The landing page explains the agent "
+        "promise, Task A exposes the simulated review workflow, and Task B exposes the ranked "
+        "recommendation workflow. The app runs locally, in Docker, or on Render."
     )
-    add_image(document, ASSET_DIR / "landing.png", "Figure 2. Landing page for the judge-facing agent studio.", width=5.8)
     add_side_by_side_images(
         document,
         ASSET_DIR / "task_a.png",
         ASSET_DIR / "task_b.png",
         "Figure 3. Task A and Task B workspaces after generation.",
-    )
-
-    document.add_heading("8. Reproducibility and Deployment", level=1)
-    add_numbered(
-        document,
-        [
-            "Run the FastAPI service locally or through Docker Compose; the same container serves the UI and REST API.",
-            "Set GROQ_API_KEY to enable hosted generation, or omit it to use deterministic fallback text.",
-            "Set YARNGPT_API_KEY to enable hosted audio, or omit it to use browser speech fallback.",
-            "Use /api/v1/generate-review, /api/v1/recommend, /api/v1/evaluation, scripts/evaluate.py, scripts/download_amazon_subset.py, and scripts/evaluate_dataset.py for scoring and larger Amazon subset runs.",
-        ],
     )
     add_table(
         document,
@@ -597,7 +702,7 @@ def build_document() -> None:
         [2.1, 4.4],
     )
 
-    document.add_heading("9. Limitations and Next Steps", level=1)
+    document.add_heading("8. Limitations and Future Work", level=1)
     document.add_paragraph(
         "The current build is optimized for deadline reliability and judge reproducibility. The main "
         "limitation is that the checked-in Amazon subset is still much smaller than the full corpus, "
@@ -612,8 +717,34 @@ def build_document() -> None:
         "from a polished hackathon demo into a stronger production recommender."
     )
 
-    # Keep the final section from dangling alone.
-    document.add_section(WD_SECTION.CONTINUOUS)
+    document.add_heading("Team and Conclusion", level=1)
+    add_table(
+        document,
+        ["Team Ace Member", "Role / Strength"],
+        [
+            ["Teslim Sadiq", "Product engineering, backend/API integration, deployment, and demo flow"],
+            ["Yasir Oyebo", "Data strategy, evaluation, experiments, and model reasoning"],
+            ["Abiodun Mark", "UX polish, Nigerian contextualization, storytelling, and judge presentation"],
+        ],
+        [2.0, 4.5],
+    )
+    document.add_paragraph(
+        "Team Ace is passionate about building practical, culturally aware AI that solves real African "
+        "problems. This project is not just an agent submission; it is a demonstration of a new standard "
+        "for interpretable, reproducible, and deeply contextual LLM agents built for Nigeria and the world."
+    )
+    document.add_heading("References and Appendix", level=2)
+    add_bullets(
+        document,
+        [
+            "Amazon Reviews 2023 official dataset, McAuley Lab.",
+            "Groq hosted chat model for controlled review and explanation generation.",
+            "YarnGPT hosted voice layer for Nigerian-localized audio output.",
+            "Evaluation artifacts: docs/evaluation_report.json and scripts/evaluate_dataset.py.",
+        ],
+    )
+
+    enforce_black_text(document)
     document.save(OUTPUT)
     print(OUTPUT)
 
