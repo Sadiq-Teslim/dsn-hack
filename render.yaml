@@ -1,12 +1,34 @@
 services:
   - type: web
-    name: dsn-bct-llm-agent
+    name: team-ace-task-a-user-modeling
     runtime: python
     plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    startCommand: python -m uvicorn app.task_a_main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
+      - key: APP_NAME
+        value: Team Ace Task A - User Modeling
+      - key: LLM_PROVIDER
+        value: groq
+      - key: GROQ_MODEL
+        value: llama-3.1-8b-instant
+      - key: DATA_PATH
+        value: data/fixtures
+      - key: GROQ_API_KEY
+        sync: false
+      - key: YARNGPT_API_KEY
+        sync: false
+  - type: web
+    name: team-ace-task-b-recommendation
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn app.task_b_main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: APP_NAME
+        value: Team Ace Task B - Recommendation
       - key: LLM_PROVIDER
         value: groq
       - key: GROQ_MODEL

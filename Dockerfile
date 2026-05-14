@@ -11,6 +11,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app app
 COPY static static
 COPY data/fixtures data/fixtures
+COPY data/amazon_subset data/amazon_subset
 
 EXPOSE 8000
 

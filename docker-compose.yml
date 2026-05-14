@@ -1,10 +1,23 @@
 services:
-  bct-agent:
+  task-a:
     build: .
+    command: uvicorn app.task_a_main:app --host 0.0.0.0 --port 8000
     ports:
-      - "8000:8000"
+      - "8001:8000"
     environment:
       - LLM_PROVIDER=groq
       - GROQ_API_KEY=${GROQ_API_KEY:-}
       - GROQ_MODEL=${GROQ_MODEL:-llama-3.1-8b-instant}
+      - YARNGPT_API_KEY=${YARNGPT_API_KEY:-}
+      - DATA_PATH=data/fixtures
+  task-b:
+    build: .
+    command: uvicorn app.task_b_main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8002:8000"
+    environment:
+      - LLM_PROVIDER=groq
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - GROQ_MODEL=${GROQ_MODEL:-llama-3.1-8b-instant}
+      - YARNGPT_API_KEY=${YARNGPT_API_KEY:-}
       - DATA_PATH=data/fixtures

@@ -2,7 +2,7 @@
 
 **DSN x BCT LLM Agent Challenge, Data & AI Summit Hackathon 3.0**
 
-Team Ace built one unified agent studio for both challenge tasks: simulating how a user would review an unseen item and recommending what they are likely to choose next.
+Team Ace built the challenge as two deployable agent services: one for simulating how a user would review an unseen item, and one for recommending what they are likely to choose next. The services share the same behavioral philosophy, but each task can be submitted, deployed, tested, and documented independently.
 
 The core idea is simple: users are not static profiles. They are changing stories shaped by ratings, reviews, budgets, routines, family needs, location, language, and culture. Our system turns those signals into dynamic behavioral personas that can power both review simulation and personalized recommendation.
 
@@ -53,22 +53,30 @@ The ranking scores are intentionally reported on a small, checked-in subset so j
 
 | Deliverable | Location |
 |---|---|
-| Web app and API | FastAPI service in `app/`, UI in `static/` |
-| Solution paper | `docs/BCT_Solution_Paper_Team_Ace.docx` |
+| Task A deployed app/API | `app.task_a_main:app` |
+| Task B deployed app/API | `app.task_b_main:app` |
+| Task A solution paper | `docs/Task_A_User_Modeling_Team_Ace.docx` |
+| Task B solution paper | `docs/Task_B_Recommendation_Team_Ace.docx` |
+| Combined solution paper | `docs/BCT_Solution_Paper_Team_Ace.docx` |
 | Real Amazon subset | `data/amazon_subset/` |
 | Evaluation report | `docs/evaluation_report.json` |
 | Deployment config | `Dockerfile`, `docker-compose.yml`, `render.yaml` |
 
 ## Quick Demo Flow
 
-1. Open the app.
-2. Go to **Task A**.
-3. Select a demo persona, adjust product details, and generate a review.
-4. Check the predicted rating, review text, reasoning, confidence, and evidence.
-5. Use **Yarn Mode** to localize the explanation and generate voice output.
-6. Go to **Task B**.
-7. Select a persona, enter a context like "I need affordable things for a busy school week", and generate recommendations.
-8. Review the ranked items, scores, reasons, and matched preferences.
+### Task A
+
+1. Open the Task A deployment.
+2. Select a demo persona, adjust product details, and generate a review.
+3. Check the predicted rating, review text, reasoning, confidence, and evidence.
+4. Use **Yarn Mode** to localize the explanation and generate voice output.
+
+### Task B
+
+1. Open the Task B deployment.
+2. Select a persona and enter a context like "I need affordable things for a busy school week."
+3. Generate recommendations.
+4. Review the ranked items, scores, reasons, and matched preferences.
 
 ## Quick Start
 
@@ -76,13 +84,20 @@ The ranking scores are intentionally reported on a small, checked-in subset so j
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r requirements-dev.txt
-uvicorn app.main:app --reload
+```
+
+Run each task in a separate terminal:
+
+```bash
+uvicorn app.task_a_main:app --reload --port 8001
+uvicorn app.task_b_main:app --reload --port 8002
 ```
 
 Open:
 
 ```text
-http://127.0.0.1:8000
+Task A: http://127.0.0.1:8001
+Task B: http://127.0.0.1:8002
 ```
 
 ## Environment Variables
@@ -110,18 +125,23 @@ docker compose up --build
 Then open:
 
 ```text
-http://127.0.0.1:8000
+Task A: http://127.0.0.1:8001
+Task B: http://127.0.0.1:8002
 ```
 
 ## Render Deployment
 
-This repository includes `render.yaml` for Render deployment.
+This repository includes `render.yaml` with two Render web services:
+
+- `team-ace-task-a-user-modeling`
+- `team-ace-task-b-recommendation`
 
 Recommended Render settings:
 
 ```text
 Build Command: pip install -r requirements.txt
-Start Command: python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+Task A Start Command: python -m uvicorn app.task_a_main:app --host 0.0.0.0 --port $PORT
+Task B Start Command: python -m uvicorn app.task_b_main:app --host 0.0.0.0 --port $PORT
 Health Check Path: /health
 ```
 
@@ -139,13 +159,14 @@ The keys are marked `sync: false` in `render.yaml`, so secrets are never committ
 ### Health
 
 ```bash
-curl http://127.0.0.1:8000/health
+curl http://127.0.0.1:8001/health
+curl http://127.0.0.1:8002/health
 ```
 
 ### Generate Review
 
 ```bash
-curl -X POST http://127.0.0.1:8000/api/v1/generate-review ^
+curl -X POST http://127.0.0.1:8001/api/v1/generate-review ^
   -H "Content-Type: application/json" ^
   -d @examples/generate_review.json
 ```
@@ -153,7 +174,7 @@ curl -X POST http://127.0.0.1:8000/api/v1/generate-review ^
 ### Recommend
 
 ```bash
-curl -X POST http://127.0.0.1:8000/api/v1/recommend ^
+curl -X POST http://127.0.0.1:8002/api/v1/recommend ^
   -H "Content-Type: application/json" ^
   -d @examples/recommend.json
 ```
@@ -161,7 +182,7 @@ curl -X POST http://127.0.0.1:8000/api/v1/recommend ^
 ### Evaluation
 
 ```bash
-curl http://127.0.0.1:8000/api/v1/evaluation
+python scripts/evaluate_dataset.py --data-path data/amazon_subset --output docs/evaluation_report.json
 ```
 
 ## Voice and Yarn Mode
@@ -214,15 +235,28 @@ python scripts/evaluate_dataset.py --data-path data/amazon_subset --output docs/
 
 The tests cover API behavior, schema validation, scoring, generation fallback, ranking, and cold-start handling.
 
-## Solution Paper
+## Solution Papers
 
-Final paper:
+Task-specific papers:
+
+```text
+docs/Task_A_User_Modeling_Team_Ace.docx
+docs/Task_B_Recommendation_Team_Ace.docx
+```
+
+Combined paper:
 
 ```text
 docs/BCT_Solution_Paper_Team_Ace.docx
 ```
 
-Regenerate it with:
+Regenerate the separate task papers with:
+
+```bash
+python scripts/create_task_specific_papers.py
+```
+
+Regenerate the combined paper with:
 
 ```bash
 python scripts/create_solution_paper_docx.py
