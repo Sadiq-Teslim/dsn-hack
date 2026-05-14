@@ -240,8 +240,8 @@ The tests cover API behavior, schema validation, scoring, generation fallback, r
 Task-specific papers:
 
 ```text
-docs/Task_A_User_Modeling_Team_Ace.docx
-docs/Task_B_Recommendation_Team_Ace.docx
+docs/Task_A_User_Modeling_Team_Ace.docx  # 5-page standalone Task A paper
+docs/Task_B_Recommendation_Team_Ace.docx # 6-page standalone Task B paper
 ```
 
 Combined paper:
