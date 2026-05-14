@@ -127,7 +127,16 @@ The `/api/v1/evaluation` endpoint reports fixture smoke metrics. Larger Amazon s
 
 ## Real Amazon Subset
 
-For a stronger competition run, stream a bounded real subset from the official Amazon Reviews 2023 files:
+The repository includes `data/amazon_subset`, a bounded real Amazon Reviews 2023 subset covering:
+
+- `All_Beauty`
+- `Grocery_and_Gourmet_Food`
+- `Movies_and_TV`
+- `Video_Games`
+
+Current checked-in subset: 252 products, 265 real reviews, 70 users, and 86 held-out test interactions.
+
+To refresh or expand it, stream a bounded real subset from the official Amazon Reviews 2023 files:
 
 ```bash
 python scripts/download_amazon_subset.py --max-reviews-per-category 400
@@ -145,10 +154,11 @@ The script writes `products.json`, `reviews.json`, `splits.json`, and `subset_me
 Compare personalized models against baselines:
 
 ```bash
-python scripts/evaluate_dataset.py --data-path data/amazon_smoke --output docs/evaluation_report.json
+python scripts/evaluate_dataset.py --data-path data/amazon_subset --output docs/evaluation_report.json
 ```
 
-The current checked-in smoke report shows:
+The current checked-in real subset report shows:
 
-- Task A personalized RMSE: `0.8734` vs global baseline `1.3935`
-- Task B personalized NDCG@10: `0.1879` vs popularity baseline `0.0413`
+- Task A personalized RMSE: `0.7357` vs global baseline `1.3133`
+- Task B personalized NDCG@10: `0.0481` vs popularity baseline `0.0194`
+- Task B personalized Hit Rate@10: `0.1163` vs popularity baseline `0.0349`

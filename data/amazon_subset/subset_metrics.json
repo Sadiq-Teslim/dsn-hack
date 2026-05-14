@@ -1,0 +1,34 @@
+{
+  "source": "Amazon Reviews 2023 official McAuley Lab JSONL.GZ files",
+  "categories": [
+    "All_Beauty",
+    "Grocery_and_Gourmet_Food",
+    "Movies_and_TV",
+    "Video_Games"
+  ],
+  "products": 252,
+  "reviews": 265,
+  "users": 70,
+  "average_rating": 4.147,
+  "train_interactions": 179,
+  "test_interactions": 86,
+  "category_counts": {
+    "All_Beauty": {
+      "products": 43,
+      "reviews": 46
+    },
+    "Grocery_and_Gourmet_Food": {
+      "products": 70,
+      "reviews": 80
+    },
+    "Movies_and_TV": {
+      "products": 59,
+      "reviews": 59
+    },
+    "Video_Games": {
+      "products": 80,
+      "reviews": 80
+    }
+  },
+  "rmse_baseline_estimate": 1.273
+}

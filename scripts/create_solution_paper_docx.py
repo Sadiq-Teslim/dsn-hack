@@ -16,7 +16,11 @@ ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "docs" / "BCT_Solution_Paper.docx"
 ASSET_DIR = ROOT / "docs" / "assets"
 EVAL_REPORT = ROOT / "docs" / "evaluation_report.json"
-SUBSET_METRICS = ROOT / "data" / "amazon_smoke" / "subset_metrics.json"
+SUBSET_METRICS = (
+    ROOT / "data" / "amazon_subset" / "subset_metrics.json"
+    if (ROOT / "data" / "amazon_subset" / "subset_metrics.json").exists()
+    else ROOT / "data" / "amazon_smoke" / "subset_metrics.json"
+)
 
 ACCENT = RGBColor(36, 89, 77)
 BURGUNDY = RGBColor(127, 29, 45)
@@ -149,7 +153,7 @@ def add_metadata_table(document: Document) -> None:
     rows = [
         ("Competition", "Data & AI Summit Hackathon 3.0: DSN x BCT LLM Agent Challenge"),
         ("System", "Containerized FastAPI application with web UI, REST API, and Groq-backed generation"),
-        ("Dataset Strategy", "Amazon Reviews 2023 subset: Grocery, Movies & TV, Video Games, and Beauty"),
+        ("Dataset Strategy", "Real Amazon Reviews 2023 subset plus checked-in cross-domain demo fixtures"),
     ]
     for row, (label, value) in zip(table.rows, rows, strict=True):
         row.cells[0].text = label
@@ -317,11 +321,19 @@ def build_document() -> None:
 
     document.add_heading("Executive Summary", level=1)
     document.add_paragraph(
-        "The system models users as dynamic behavioral agents rather than static profiles. "
-        "It combines local, reproducible scoring with retrieval-augmented Groq generation so the "
-        "submission can be evaluated by machines, inspected by judges, and still run when no API key "
-        "is supplied. One container exposes both required tasks: simulated reviews and personalized "
-        "recommendations."
+        "This submission builds one deployable agent studio for both required tasks in the DSN x BCT "
+        "LLM Agent Challenge. The core idea is that users should not be represented as static profile "
+        "labels. They should be represented as changing behavioral traces: what they rate highly, which "
+        "tradeoffs they tolerate, how strongly budget matters, how they write, and what context makes "
+        "a recommendation useful. The application therefore shares one dynamic persona representation "
+        "across review simulation and recommendation ranking."
+    )
+    document.add_paragraph(
+        "The system combines local, reproducible scoring with retrieval-augmented Groq generation. "
+        "Local models decide ratings and recommendation order; Groq improves review fluency and "
+        "explanation quality after the structured decision has already been made. This separation keeps "
+        "the submission auditable for judges, measurable through offline scripts, and runnable even when "
+        "API keys are absent."
     )
     add_bullets(
         document,
@@ -330,6 +342,17 @@ def build_document() -> None:
             "Task B ranks products across grocery, movies, games, and beauty using popularity, preference match, context match, category affinity, and cold-start fallbacks.",
             "Nigerian context is represented through persona fields such as location, budget, language preference, family use cases, weekday routines, harmattan weather, and local media taste.",
         ],
+    )
+    add_table(
+        document,
+        ["Requirement", "Implemented Evidence", "Judge-Facing Path"],
+        [
+            ["Task A", "Persona plus product inputs generate rating, review, confidence, reasoning, and evidence.", "/task-a and POST /api/v1/generate-review"],
+            ["Task B", "Persona plus context produces ranked recommendations with explanations and matched preferences.", "/task-b and POST /api/v1/recommend"],
+            ["Solution Paper", "This 4-8 page DOCX explains architecture, experiments, ablations, data, results, and limitations.", "docs/BCT_Solution_Paper.docx"],
+            ["Reproducibility", "Docker, Render config, tests, fixture data, real Amazon subset, and deterministic no-key fallback.", "README.md, Dockerfile, scripts/evaluate_dataset.py"],
+        ],
+        [1.35, 3.25, 1.9],
     )
 
     document.add_heading("1. Problem Framing", level=1)
@@ -343,6 +366,14 @@ def build_document() -> None:
         "Our design treats the persona as the shared memory object between both tasks. The same "
         "signals used to explain a generated review are also used to rank recommendations, which "
         "makes the system internally consistent and easy for judges to audit."
+    )
+    document.add_paragraph(
+        "A simple collaborative filter would be too narrow for this challenge because it can rank known "
+        "items but cannot easily explain why a Lagos student, an Abuja professional, or a family shopper "
+        "would respond differently to the same product. A pure LLM approach would have the opposite "
+        "problem: fluent language without stable scoring. The submitted approach sits between both "
+        "extremes. It uses transparent numerical features for behavioral decisions, then uses an LLM as "
+        "a controlled language layer."
     )
 
     document.add_heading("2. Architecture", level=1)
@@ -369,36 +400,64 @@ def build_document() -> None:
         "improves fluency and explanation quality, while local models determine the behavioral "
         "decision."
     )
+    document.add_heading("Agentic Workflow", level=2)
+    add_numbered(
+        document,
+        [
+            "Read the persona, stated context, and historical interactions, then summarize rating bias, category affinity, likes, dislikes, tone, and budget pressure.",
+            "Retrieve the most relevant prior interactions for the current product or recommendation context.",
+            "Score the behavioral decision locally: Task A predicts stars; Task B ranks candidates before any LLM text is requested.",
+            "Ask Groq to verbalize only the validated result, with evidence and constraints included in the prompt.",
+            "Validate the response shape and fall back to deterministic local text when the hosted model is unavailable.",
+        ],
+    )
+    document.add_paragraph(
+        "This workflow is intentionally agentic but bounded. The agent reasons through memory, retrieval, "
+        "scoring, and explanation, yet every external output is tied back to explicit fields that can be "
+        "tested through the API."
+    )
 
     document.add_heading("3. Dataset and Splitting Strategy", level=1)
     document.add_paragraph(
-        "The competition plan uses Amazon Reviews 2023 because it provides item metadata, review "
-        "text, ratings, user histories, and multiple product domains. The repository ships with a "
-        "small Amazon-style fixture dataset so evaluators can run the app instantly. The same schema "
-        "is used for larger sampled categories."
+        "The competition plan uses Amazon Reviews 2023 because it provides review text, ratings, user "
+        "histories, item identifiers, and product categories at real platform scale. The repository now "
+        "ships two data tracks. First, a small curated cross-domain fixture gives judges an instant demo "
+        "without downloads. Second, a checked-in real Amazon Reviews 2023 subset supports measurable "
+        "experiments across the four target domains."
     )
     add_bullets(
         document,
         [
-            "Primary domains: Grocery and Gourmet Food, Movies and TV, Video Games, and All Beauty.",
+            "Real subset domains: Grocery and Gourmet Food, Movies and TV, Video Games, and All Beauty.",
             "Train/test construction: hold out each user's most recent interaction where enough history exists.",
-            "Cold-start support: when history is sparse, rely more heavily on item metadata, popularity, context text, and stated persona preferences.",
+            "Metadata handling: official product metadata is used when available; bounded downloads fall back to review-derived product stubs so every real review remains runnable.",
+            "Cold-start support: when history is sparse, rely more heavily on item/category priors, popularity, context text, and stated persona preferences.",
         ],
     )
     if subset_metrics:
         add_table(
             document,
-            ["Smoke Subset", "Value", "Meaning"],
+            ["Real Amazon Subset", "Value", "Meaning"],
             [
-                ["Source", "Amazon Reviews 2023", "Official McAuley Lab review and metadata JSONL.GZ files"],
-                ["Products", str(subset_metrics.get("products", "")), "Normalized candidate products in the smoke run"],
-                ["Reviews", str(subset_metrics.get("reviews", "")), "Real review texts and ratings after filtering"],
-                ["Users", str(subset_metrics.get("users", "")), "Users with enough chronological behavior for holdout testing"],
+                ["Source", "Amazon Reviews 2023", "Official McAuley Lab review files; metadata stream supported when available"],
+                ["Categories", ", ".join(subset_metrics.get("categories", [])), "The four challenge demo domains are represented"],
+                ["Products", str(subset_metrics.get("products", "")), "Normalized candidate products in the checked-in subset"],
+                ["Reviews", str(subset_metrics.get("reviews", "")), "Real review texts and star ratings after filtering"],
+                ["Users", str(subset_metrics.get("users", "")), "Users contributing chronological behavior for train/test splits"],
+                ["Holdout", f"{subset_metrics.get('train_interactions', '')} train / {subset_metrics.get('test_interactions', '')} test", "Most recent interaction held out by user when possible"],
             ],
-            [1.7, 1.4, 3.4],
+            [1.55, 2.15, 2.8],
         )
 
     document.add_heading("4. Experiments and Ablations", level=1)
+    document.add_paragraph(
+        "The experiments are designed to answer a practical judge question: does the system understand "
+        "the user, or is it merely producing plausible text? Each baseline removes one source of "
+        "behavioral signal. Rating accuracy is measured with RMSE; ranking quality is measured with "
+        "NDCG@10 and Hit Rate@10. Review text quality can be scored with ROUGE-L/BERTScore when the "
+        "optional NLP metric dependencies are available, but the paper prioritizes behavioral ablations "
+        "because they are the clearest evidence of user modeling."
+    )
     add_table(
         document,
         ["Experiment", "Purpose", "Expected Signal"],
@@ -411,13 +470,19 @@ def build_document() -> None:
         ],
         [1.7, 2.4, 2.4],
     )
+    document.add_paragraph(
+        "The cold-start and cross-domain cases are especially important for the hackathon rubric. The "
+        "ranker does not require a user to have prior reviews in the same category. It can use explicit "
+        "persona fields, context text, budget level, category priors, and product popularity to make a "
+        "reasonable first recommendation, then become more personalized as history grows."
+    )
 
     document.add_heading("5. Current Results", level=1)
     document.add_paragraph(
         "The repository includes both a hand-checkable fixture split and a real Amazon Reviews 2023 "
-        "smoke subset. The Amazon smoke subset is still small, but it proves that the same code path "
-        "can stream official data, normalize metadata, create chronological user splits, and compare "
-        "personalized models against baselines."
+        "multi-domain subset. The subset is intentionally bounded so it can be committed and inspected, "
+        "but it proves that the same code path can stream official data, normalize product candidates, "
+        "create chronological user splits, and compare personalized models against baselines."
     )
     if eval_report:
         add_table(
@@ -462,6 +527,12 @@ def build_document() -> None:
         "of the ablation. Personalized rating and ranking beat non-personalized baselines on the "
         "same held-out interactions."
     )
+    document.add_paragraph(
+        "The current ranking scores are modest because the checked-in subset is small and sparse, which "
+        "is expected for a lightweight repository artifact. The important result is that the personalized "
+        "ranker improves over popularity-only ranking while remaining interpretable. A larger subset "
+        "should increase candidate density and produce more stable NDCG values."
+    )
 
     document.add_heading("6. Nigerian Contextualization", level=1)
     document.add_paragraph(
@@ -480,6 +551,13 @@ def build_document() -> None:
     document.add_paragraph(
         "A third demo persona, a Port Harcourt family shopper, covers home use, visitors, children, "
         "family-safe media, easy guest drinks, and gentle skincare."
+    )
+    document.add_paragraph(
+        "The application also adds a voice layer through YarnGPT. Judges can generate the standard "
+        "review or recommendation, convert the explanation into Nigerian Pidgin, Yoruba-flavoured "
+        "English, Hausa-flavoured English, Igbo-flavoured English, or a formal judge summary, and play "
+        "hosted audio when a YarnGPT key is configured. This does not change the underlying score; it "
+        "changes how the explanation is delivered to a local audience."
     )
 
     document.add_heading("7. Product Demo Screens", level=1)
@@ -502,16 +580,36 @@ def build_document() -> None:
         [
             "Run the FastAPI service locally or through Docker Compose; the same container serves the UI and REST API.",
             "Set GROQ_API_KEY to enable hosted generation, or omit it to use deterministic fallback text.",
-            "Use /api/v1/generate-review, /api/v1/recommend, /api/v1/evaluation, scripts/evaluate.py, and scripts/build_dataset.py for scoring and larger Amazon subset runs.",
+            "Set YARNGPT_API_KEY to enable hosted audio, or omit it to use browser speech fallback.",
+            "Use /api/v1/generate-review, /api/v1/recommend, /api/v1/evaluation, scripts/evaluate.py, scripts/download_amazon_subset.py, and scripts/evaluate_dataset.py for scoring and larger Amazon subset runs.",
         ],
+    )
+    add_table(
+        document,
+        ["Artifact", "Purpose"],
+        [
+            ["Dockerfile / docker-compose.yml", "Containerized local verification for judges"],
+            ["render.yaml", "Deployment blueprint for the hosted demo"],
+            ["tests/", "Unit and integration checks for schemas, scoring, generation, fallback, and API behavior"],
+            ["data/amazon_subset", "Checked-in real Amazon Reviews 2023 subset used for the latest paper metrics"],
+            ["data/fixtures", "Deterministic cross-domain UI demo data that works without network access"],
+        ],
+        [2.1, 4.4],
     )
 
     document.add_heading("9. Limitations and Next Steps", level=1)
     document.add_paragraph(
         "The current build is optimized for deadline reliability and judge reproducibility. The main "
-        "limitation is that the repository includes a small fixture dataset rather than the full "
-        "Amazon corpus. With more time, we would add embedding indexes, larger sampled evaluation, "
-        "rating calibration, multi-turn conversational memory, and real Nigerian marketplace data."
+        "limitation is that the checked-in Amazon subset is still much smaller than the full corpus, "
+        "and some product metadata in the bounded subset is review-derived when official metadata "
+        "streaming is incomplete. With more time, we would add embedding indexes, larger sampled "
+        "evaluation, rating calibration, multi-turn conversational memory, richer BERTScore evaluation, "
+        "and real Nigerian marketplace data."
+    )
+    document.add_paragraph(
+        "The strongest next experiment would be a larger four-category run with dense product metadata "
+        "and an embedding index for candidate generation. That would let the same agent workflow scale "
+        "from a polished hackathon demo into a stronger production recommender."
     )
 
     # Keep the final section from dangling alone.

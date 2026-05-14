@@ -42,7 +42,7 @@ AMAZON_2023_URLS = {
 
 def stream_jsonl_gz(url: str, limit: int | None = None) -> Iterable[dict]:
     request = Request(url, headers={"User-Agent": "bct-agent-subset/0.1"})
-    with urlopen(request, timeout=90) as response:
+    with urlopen(request, timeout=240) as response:
         with gzip.GzipFile(fileobj=response) as gz:
             for index, raw_line in enumerate(gz):
                 if limit is not None and index >= limit:
@@ -169,12 +169,22 @@ def build_subset(categories: list[str], output_dir: Path, max_reviews_per_catego
 
         print(f"Streaming metadata for {category} ({len(wanted_items)} wanted items)...", flush=True)
         products: list[dict] = []
-        for raw_meta in stream_jsonl_gz(urls["meta"], limit=meta_scan_limit):
-            item_id = str(raw_meta.get("parent_asin") or raw_meta.get("asin") or "")
-            if item_id in wanted_items:
-                products.append(normalize_product(raw_meta, category, review_stats))
-                if len(products) >= len(wanted_items):
-                    break
+        try:
+            if meta_scan_limit > 0:
+                for raw_meta in stream_jsonl_gz(urls["meta"], limit=meta_scan_limit):
+                    item_id = str(raw_meta.get("parent_asin") or raw_meta.get("asin") or "")
+                    if item_id in wanted_items:
+                        products.append(normalize_product(raw_meta, category, review_stats))
+                        if len(products) >= len(wanted_items):
+                            break
+        except (EOFError, OSError, TimeoutError) as exc:
+            print(
+                f"Metadata stream incomplete for {category} ({exc}); using review-derived product stubs for missing items.",
+                file=sys.stderr,
+                flush=True,
+            )
+
+        products.extend(build_missing_product_stubs(category, reviews, products, review_stats))
 
         title_by_id = {product["item_id"]: product["title"] for product in products}
         for review in reviews:
@@ -209,6 +219,44 @@ def chronological_user_split(reviews: list[dict]) -> tuple[list[dict], list[dict
         else:
             train.extend(user_reviews)
     return train, test
+
+
+def build_missing_product_stubs(
+    category: str,
+    reviews: list[dict],
+    products: list[dict],
+    review_stats: dict[str, list[float]],
+) -> list[dict]:
+    """Keep the subset usable when official metadata streaming is incomplete."""
+    existing = {product["item_id"] for product in products}
+    stubs: list[dict] = []
+    for review in reviews:
+        item_id = review["item_id"]
+        if not item_id or item_id in existing:
+            continue
+        ratings = review_stats.get(item_id, [])
+        average = sum(ratings) / len(ratings) if ratings else float(review["rating"])
+        stubs.append(
+            {
+                "item_id": item_id,
+                "title": review.get("title") or "Amazon review item",
+                "category": category,
+                "description": review.get("review_text", "")[:450],
+                "brand": None,
+                "price": None,
+                "average_rating": round(float(average), 3),
+                "rating_number": len(ratings) or 1,
+                "attributes": {
+                    "main_category": category.replace("_", " "),
+                    "features": [],
+                    "details": {},
+                    "keywords": _keywords(review.get("title"), review.get("review_text")),
+                    "metadata_source": "review-derived fallback",
+                },
+            }
+        )
+        existing.add(item_id)
+    return stubs
 
 
 def summarize_subset(products: list[dict], reviews: list[dict], splits: dict[str, list[dict]]) -> dict:
