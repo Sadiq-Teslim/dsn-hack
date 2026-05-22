@@ -371,7 +371,7 @@ function renderReasoningTrace(trace) {
     .join("");
   return `
     <details class="trace-panel mt-5" open>
-      <summary>Agent reasoning trace</summary>
+      <summary>How this result was prepared</summary>
       <div class="mt-4">${rows}</div>
     </details>
   `;
