@@ -8,5 +8,6 @@ venv/
 data/raw/
 data/processed/
 artifacts/
+docs/*_local_*.json
 dist/
 build/
