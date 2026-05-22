@@ -191,6 +191,7 @@ class CandidateShortlistStep(Step):
             "unsupported_targets": unsupported,
             "excluded_categories": excluded,
             "max_price": intent.max_price,
+            "max_price_exclusive": intent.max_price_exclusive,
         }
         return context
 

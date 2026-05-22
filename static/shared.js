@@ -397,6 +397,10 @@ function humanTraceNotes(step) {
 
   if (name === "ResolveUserProfileStep") {
     notes.push("It reviewed the selected persona and the user's past preferences.");
+    if (isNumber(outputs.rating_mean)) {
+      const spread = isNumber(outputs.rating_std) ? ` with a ${formatNumber(outputs.rating_std, 1)}-star variation` : "";
+      notes.push(`The user's usual rating level is about ${formatNumber(outputs.rating_mean, 1)}/5${spread}.`);
+    }
     if (outputs.nigerian_register) notes.push(`It kept the user's preferred communication style as ${outputs.nigerian_register}.`);
     if (outputs.top_taste_tokens?.length || outputs.taste_tokens?.length) {
       notes.push(`It noted interests such as ${friendlyList(outputs.top_taste_tokens || outputs.taste_tokens, 4)}.`);
@@ -411,13 +415,25 @@ function humanTraceNotes(step) {
   }
 
   if (name === "PredictSentimentStep") {
-    notes.push(`It estimated that the user would have a ${reactionLabel(outputs.sentiment)} reaction to the product.`);
+    notes.push(`It estimated a ${reactionLabel(outputs.sentiment)} reaction, about ${formatPercent(outputs.sentiment)} on the reaction scale.`);
+    if (isNumber(outputs.base_rating)) notes.push(`Before personal adjustment, the product looked like a ${formatNumber(outputs.base_rating, 1)}/5 match.`);
+    if (isNumber(outputs.catalog_rating)) notes.push(`The product's general user rating was considered at ${formatNumber(outputs.catalog_rating, 1)}/5.`);
+    if (isNumber(outputs.preference_overlap) && outputs.preference_overlap > 0) {
+      notes.push(`About ${formatPercent(outputs.preference_overlap)} of the product wording overlapped with the user's stated interests.`);
+    }
+    if (isNumber(outputs.dislike_overlap) && outputs.dislike_overlap > 0) {
+      notes.push(`About ${formatPercent(outputs.dislike_overlap)} overlapped with dislikes, so that reduced confidence.`);
+    }
     if (outputs.base_reasoning) notes.push(cleanTraceSentence(outputs.base_reasoning));
     return notes;
   }
 
   if (name === "CalibrateRatingStep") {
-    notes.push(`It chose a ${outputs.calibrated_rating}/5 rating after comparing the product fit with the user's usual rating style.`);
+    if (isNumber(outputs.raw_rating) && isNumber(outputs.calibrated_rating)) {
+      notes.push(`It moved the rating from ${formatNumber(outputs.raw_rating, 1)}/5 to ${formatNumber(outputs.calibrated_rating, 1)}/5 after applying the user's rating style.`);
+    } else {
+      notes.push(`It chose a ${outputs.calibrated_rating}/5 rating after comparing the product fit with the user's usual rating style.`);
+    }
     return notes;
   }
 
@@ -435,6 +451,7 @@ function humanTraceNotes(step) {
 
   if (name === "FormalizeReviewReasoningStep" || name === "BuildRecommendationResponseStep") {
     notes.push("It rewrote the visible explanation so it reads clearly for a person reviewing the result.");
+    if (isNumber(outputs.item_count)) notes.push(`The final response contains ${plural(outputs.item_count, "recommendation")}.`);
     if (outputs.presentation_llm_configured === true) notes.push("It used the hosted language service for the final explanation.");
     if (outputs.presentation_fallback_used === true) notes.push("It used a local backup explanation because the hosted service was unavailable.");
     return notes;
@@ -444,14 +461,14 @@ function humanTraceNotes(step) {
     if (outputs.target_categories?.length) notes.push(`It understood the requested area as ${friendlyCategories(outputs.target_categories)}.`);
     if (outputs.excluded_categories?.length) notes.push(`It treated ${friendlyCategories(outputs.excluded_categories)} as excluded from the result.`);
     if (outputs.max_price) notes.push(`It treated ${pricePhrase(outputs)} as a firm price rule.`);
-    if (outputs.constraints?.length) notes.push(`It also noticed conditions such as ${friendlyList(outputs.constraints, 5)}.`);
+    if (outputs.constraints?.length) notes.push(`It also noticed ${plural(outputs.constraints.length, "condition")}: ${friendlyList(outputs.constraints, 5)}.`);
     if (!notes.length) notes.push("It read the message and identified what kind of recommendation was needed.");
     return notes;
   }
 
   if (name === "CrossDomainBridgeStep") {
     if (outputs.is_cross_domain) notes.push("It connected the user's interests from one area to another before recommending.");
-    if (outputs.taste_descriptors?.length) notes.push(`It used preference ideas such as ${friendlyList(outputs.taste_descriptors, 5)}.`);
+    if (outputs.taste_descriptors?.length) notes.push(`It used ${plural(outputs.taste_descriptors.length, "preference idea")}, including ${friendlyList(outputs.taste_descriptors, 5)}.`);
     if (!notes.length) notes.push("It checked whether the request needed ideas to be connected across categories.");
     return notes;
   }
@@ -470,19 +487,23 @@ function humanTraceNotes(step) {
     notes.push(`It found ${plural(outputs.candidate_count, "possible option")} after applying the request rules.`);
     if (outputs.top_candidates?.length) notes.push(`The first options considered were ${friendlyList(outputs.top_candidates, 4)}.`);
     if (outputs.excluded_categories?.length) notes.push(`It removed options from ${friendlyCategories(outputs.excluded_categories)}.`);
+    if (outputs.max_price) notes.push(`Every option kept at this stage respected the ${pricePhrase(outputs)} rule.`);
     return notes;
   }
 
   if (name === "LLMRerankStep") {
     notes.push("It compared the remaining options and placed the strongest matches first.");
-    if (outputs.top_reranked?.length) notes.push(`The leading choices after comparison were ${friendlyList(outputs.top_reranked, 4)}.`);
+    if (outputs.top_reranked?.length) notes.push(`It reported ${plural(outputs.top_reranked.length, "leading choice")}: ${friendlyList(outputs.top_reranked, 4)}.`);
     if (outputs.fallback_used === true) notes.push("It used the local backup comparison for this step.");
     return notes;
   }
 
   if (name === "DiversityStep") {
     notes.push("It checked the list so the final result was not too repetitive.");
-    if (outputs.selected_categories?.length) notes.push(`The final mix included ${friendlyCategories(outputs.selected_categories)}.`);
+    if (outputs.selected_categories?.length) {
+      const uniqueCount = new Set(outputs.selected_categories).size;
+      notes.push(`The final mix covered ${plural(uniqueCount, "category")}: ${friendlyCategories(outputs.selected_categories)}.`);
+    }
     return notes;
   }
 
@@ -509,6 +530,22 @@ function friendlyList(items, limit = 4) {
 function plural(count, label) {
   const number = Number(count || 0);
   return `${number} ${label}${number === 1 ? "" : "s"}`;
+}
+
+function isNumber(value) {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function formatNumber(value, digits = 1) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return String(value ?? "");
+  return number.toFixed(digits).replace(/\.0$/, "");
+}
+
+function formatPercent(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return "0%";
+  return `${Math.round(number * 100)}%`;
 }
 
 function reactionLabel(sentiment) {
