@@ -39,40 +39,63 @@ function currentProduct() {
 }
 
 function renderPersona(selected) {
-  $("persona-card").innerHTML = personaSummary(selected.persona);
+  const persona = selected.persona;
+  $("persona-card").innerHTML = `
+    <div class="task-a-persona-summary">
+      <div>
+        <p class="task-a-section-label">Selected persona</p>
+        <h2>${escapeHtml(persona.name)}</h2>
+        <p>${escapeHtml(persona.occupation)} &middot; ${escapeHtml(persona.location)}</p>
+      </div>
+      <div class="task-a-persona-rows">
+        <div>
+          <span>Budget</span>
+          <p>${escapeHtml(persona.budget_level)}</p>
+        </div>
+        <div>
+          <span>Likes</span>
+          <p>${escapeHtml(persona.likes.join(", "))}</p>
+        </div>
+        <div>
+          <span>Context</span>
+          <p>${escapeHtml(persona.cultural_context)}</p>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 function renderReview(result) {
   const evidence = result.evidence
-    .map((item) => `<span class="tag">${escapeHtml(evidenceLabel(item.source))} &middot; ${escapeHtml(item.title)} &middot; ${escapeHtml(item.rating)}/5</span>`)
+    .map((item) => `<span class="task-a-evidence-chip">${escapeHtml(evidenceLabel(item.source))} &middot; ${escapeHtml(item.rating)}/5</span>`)
     .join("");
   $("review-result").innerHTML = `
-    <div class="flex flex-col gap-6">
-      <div class="flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
-        <div>
-          <p class="text-sm font-black uppercase text-slate-400">Predicted rating</p>
-          <div class="review-rating mt-2">${escapeHtml(result.rating)}/5</div>
+    <div class="task-a-review-stack">
+      <div class="task-a-rating-row">
+        <div class="task-a-rating-card">
+          <p class="task-a-section-label">Predicted rating</p>
+          <strong>${escapeHtml(result.rating)}/5</strong>
         </div>
-        <div class="rounded-2xl bg-emerald-50 px-5 py-4 text-right">
-          <p class="text-sm font-black uppercase text-emerald-700">Confidence</p>
-          <p class="mt-1 text-3xl font-black text-emerald-900">${Math.round(result.confidence * 100)}%</p>
+        <div class="task-a-confidence-pill">
+          <span>Confidence</span>
+          <strong>${Math.round(result.confidence * 100)}%</strong>
         </div>
       </div>
       <div>
-        <p class="text-sm font-black uppercase text-[#4285F4]">Generated review</p>
-        <p class="mt-3 text-xl font-semibold leading-9 text-slate-800">${escapeHtml(result.review_text)}</p>
-      </div>
-      <div class="rounded-3xl bg-slate-50 p-5">
-        <p class="text-sm font-black uppercase text-slate-500">Review explanation</p>
-        <p class="mt-2 leading-7 text-slate-700">${escapeHtml(result.reasoning)}</p>
+        <p class="task-a-section-label">Generated review</p>
+        <p class="task-a-review-copy">${escapeHtml(result.review_text)}</p>
       </div>
       <div>
-        <p class="mb-3 text-sm font-black uppercase text-slate-500">Reference examples</p>
-        <div class="flex flex-wrap gap-2">${evidence}</div>
+        <p class="task-a-section-label">Reference examples</p>
+        <div class="task-a-evidence-row">${evidence}</div>
       </div>
-      ${renderReasoningTrace(result.reasoning_trace)}
+      <div class="task-a-explanation-box">
+        <p class="task-a-section-label">Review explanation</p>
+        <p>${escapeHtml(result.reasoning)}</p>
+      </div>
     </div>
   `;
+  $("task-a-trace").innerHTML = renderReasoningTrace(result.reasoning_trace).replace(" open>", ">");
   latestReviewText = `${result.rating}/5. ${result.review_text} Reasoning: ${result.reasoning}`;
   $("generate-yarn").disabled = false;
   $("yarn-result").innerHTML = "Ready. Choose a voice style and click Yarn It.";
@@ -85,8 +108,14 @@ function evidenceLabel(source) {
 }
 
 async function generateReview() {
+  $("task-a-results").hidden = false;
+  $("task-a-trace").innerHTML = "";
+  $("generate-yarn").disabled = true;
+  $("speak-yarn").disabled = true;
+  $("yarn-audio").hidden = true;
+  $("yarn-result").innerHTML = "Generate a review first.";
   $("review-result").innerHTML = `
-    <div class="loading flex h-full min-h-[360px] items-center justify-center rounded-[22px] bg-white p-8">
+    <div class="loading task-a-loading">
       <p class="text-lg font-black text-slate-500">Preparing the review...</p>
     </div>
   `;
@@ -136,7 +165,11 @@ async function init() {
     target: $("product-description"),
     status: $("description-voice-status"),
   });
-  $("generate-yarn").addEventListener("click", generateYarn);
+  $("generate-yarn").addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    generateYarn();
+  });
   $("speak-yarn").addEventListener("click", () => {
     const played = playYarnAudio(
       latestYarnText,

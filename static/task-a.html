@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Task A | Review Simulation</title>
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="/static/styles.css?v=2" />
+    <link rel="stylesheet" href="/static/styles.css?v=3" />
   </head>
   <body>
     <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/85 backdrop-blur-xl">
@@ -26,23 +26,22 @@
       </div>
     </header>
 
-    <main class="shell py-10">
-      <section class="mb-8 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
+    <main class="shell py-10 task-a-shell">
+      <section class="task-a-hero">
         <div>
-          <p class="mt-7 text-sm font-black uppercase text-[#4285F4]">Task A / User Modeling</p>
-          <h1 class="mt-2 max-w-4xl text-5xl font-black leading-none text-slate-950 md:text-7xl">
+          <p class="task-page-kicker">Task A / User Modeling</p>
+          <h1 class="task-a-title">
             Simulate the review a user would actually write.
           </h1>
-          <p class="mt-5 max-w-2xl text-lg font-semibold leading-8 text-slate-600">
+          <p class="task-a-subtitle">
             Select a persona and product. The agent predicts the rating, retrieves behavioral evidence,
             and writes a review in that user's tone.
           </p>
         </div>
-        <button id="generate-review" class="button-primary">Generate Review</button>
       </section>
 
       <section class="workspace-grid">
-        <aside class="panel p-5">
+        <aside class="panel p-5 task-a-persona-panel">
           <label class="mb-5 block">
             <span class="field-label">Persona</span>
             <select id="persona-select" class="select"></select>
@@ -82,10 +81,11 @@
               <span id="description-voice-status" class="voice-status">Voice input loading...</span>
               <button id="speak-description" class="button-secondary" type="button">Speak Product Context</button>
             </div>
+            <button id="generate-review" class="button-primary task-a-generate" type="button">Generate Review</button>
           </form>
 
-          <div class="grid gap-5 lg:grid-cols-2">
-            <article id="review-result" class="panel result-box p-6">
+          <section id="task-a-results" class="task-a-results" hidden>
+            <article id="review-result" class="panel result-box p-6 task-a-review-panel">
               <div class="flex h-full min-h-[360px] items-center justify-center rounded-[22px] bg-slate-50 p-8 text-center">
                 <div>
                   <p class="text-sm font-black uppercase text-slate-400">Waiting for input</p>
@@ -94,61 +94,61 @@
                 </div>
               </div>
             </article>
-            <article id="yarn-card" class="yarn-panel">
-              <div class="flex items-center gap-3">
-                <span class="voice-bars" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
-                <div>
-                  <p class="text-sm font-black uppercase text-slate-500">Yarn Mode</p>
-                  <h2 class="text-2xl font-black text-slate-950">Local voice layer</h2>
+            <aside class="task-a-side-column">
+              <details id="yarn-card" class="task-a-yarn-panel">
+                <summary>
+                  <span>Generate voice explanation</span>
+                  <button id="generate-yarn" class="button-secondary task-a-yarn-summary-button" type="button" disabled>Yarn It</button>
+                </summary>
+                <p class="task-a-side-copy">Turn the review into a voice-ready Nigerian local-language explanation and play hosted YarnGPT audio.</p>
+                <div class="task-a-yarn-options">
+                  <label class="block">
+                    <span class="field-label">Voice style</span>
+                    <select id="yarn-mode" class="select">
+                      <option value="Nigerian Pidgin">Nigerian Pidgin</option>
+                      <option value="Yoruba-flavoured English">Yoruba-flavoured English</option>
+                      <option value="Hausa-flavoured English">Hausa-flavoured English</option>
+                      <option value="Igbo-flavoured English">Igbo-flavoured English</option>
+                      <option value="Light Nigerian English">Light Nigerian English</option>
+                      <option value="Formal judge summary">Formal judge summary</option>
+                    </select>
+                  </label>
+                  <label class="block">
+                    <span class="field-label">YarnGPT voice</span>
+                    <select id="yarngpt-voice" class="select">
+                      <option value="Idera">Idera</option>
+                      <option value="Emma">Emma</option>
+                      <option value="Zainab">Zainab</option>
+                      <option value="Osagie">Osagie</option>
+                      <option value="Wura">Wura</option>
+                      <option value="Jude">Jude</option>
+                      <option value="Chinenye">Chinenye</option>
+                      <option value="Tayo">Tayo</option>
+                      <option value="Regina">Regina</option>
+                      <option value="Femi">Femi</option>
+                      <option value="Adaora">Adaora</option>
+                      <option value="Umar">Umar</option>
+                      <option value="Mary">Mary</option>
+                      <option value="Nonso">Nonso</option>
+                      <option value="Remi">Remi</option>
+                      <option value="Adam">Adam</option>
+                    </select>
+                  </label>
+                  <button id="speak-yarn" class="button-primary" type="button" disabled>Generate Audio</button>
                 </div>
-              </div>
-              <p class="mt-3 text-slate-600">After generating a review, turn it into a voice-ready Nigerian local-language explanation and play hosted YarnGPT audio.</p>
-              <div class="yarn-controls mt-5">
-                <label class="block">
-                  <span class="field-label">Voice style</span>
-                  <select id="yarn-mode" class="select">
-                    <option>Nigerian Pidgin</option>
-                    <option>Yoruba-flavoured English</option>
-                    <option>Hausa-flavoured English</option>
-                    <option>Igbo-flavoured English</option>
-                    <option>Formal judge summary</option>
-                  </select>
-                </label>
-                <label class="block">
-                  <span class="field-label">YarnGPT voice</span>
-                  <select id="yarngpt-voice" class="select">
-                    <option>Idera</option>
-                    <option>Emma</option>
-                    <option>Zainab</option>
-                    <option>Osagie</option>
-                    <option>Wura</option>
-                    <option>Jude</option>
-                    <option>Chinenye</option>
-                    <option>Tayo</option>
-                    <option>Regina</option>
-                    <option>Femi</option>
-                    <option>Adaora</option>
-                    <option>Umar</option>
-                    <option>Mary</option>
-                    <option>Nonso</option>
-                    <option>Remi</option>
-                    <option>Adam</option>
-                  </select>
-                </label>
-                <button id="generate-yarn" class="button-secondary" type="button" disabled>Yarn It</button>
-                <button id="speak-yarn" class="button-primary" type="button" disabled>Generate Audio</button>
-              </div>
-              <audio id="yarn-audio" class="mt-4" controls hidden></audio>
-              <div id="yarn-result" class="mt-5 rounded-3xl bg-white p-5 text-slate-700">
-                Generate a review first.
-              </div>
-            </article>
-          </div>
+                <audio id="yarn-audio" class="mt-4" controls hidden></audio>
+                <div id="yarn-result" class="task-a-yarn-result">
+                  Generate a review first.
+                </div>
+              </details>
+              <div id="task-a-trace"></div>
+            </aside>
+          </section>
         </section>
       </section>
     </main>
 
     <script src="/static/shared.js?v=11"></script>
-    <script src="/static/task-a.js?v=7"></script>
+    <script src="/static/task-a.js?v=8"></script>
   </body>
 </html>
