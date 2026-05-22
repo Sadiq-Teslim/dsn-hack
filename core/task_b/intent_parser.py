@@ -19,10 +19,25 @@ CATEGORY_ALIASES = {
 
 
 def parse_intent(context: str, profile: UserProfile, include_categories: list[str]) -> IntentSignal:
-    tokens = set(tokenize(context))
+    token_list = tokenize(context)
+    tokens = set(token_list)
     categories = list(include_categories)
-    for token, category in CATEGORY_ALIASES.items():
-        if token in tokens and category not in categories:
+    mentioned = [
+        (index, CATEGORY_ALIASES[token])
+        for index, token in enumerate(token_list)
+        if token in CATEGORY_ALIASES
+    ]
+    recommend_index = _first_index(token_list, {"recommend", "suggest", "show", "find"})
+    if include_categories:
+        target_mentions = [
+            category
+            for index, category in mentioned
+            if recommend_index is not None and index > recommend_index and category not in categories
+        ]
+    else:
+        target_mentions = _target_categories_from_mentions(mentioned, recommend_index)
+    for category in target_mentions:
+        if category not in categories:
             categories.append(category)
     constraints = [
         token
@@ -30,7 +45,13 @@ def parse_intent(context: str, profile: UserProfile, include_categories: list[st
         if token in tokens
     ]
     source_categories = set(profile.category_affinity)
-    is_cross_domain = bool(source_categories and categories and not source_categories.intersection(categories))
+    mentioned_categories = {category for _, category in mentioned}
+    source_mentions = mentioned_categories - set(categories)
+    is_cross_domain = bool(source_mentions and categories and source_mentions.difference(categories))
+    if not is_cross_domain:
+        is_cross_domain = bool(source_categories and categories and not source_categories.intersection(categories))
+    if not is_cross_domain and categories and any(word in tokens for word in ["based", "taste", "like", "liked"]):
+        is_cross_domain = len(mentioned_categories | source_categories) > 1
     if not categories and any(word in tokens for word in ["based", "taste", "like", "liked"]):
         is_cross_domain = True
     is_cold_start = profile.cold_start
@@ -52,6 +73,26 @@ def parse_intent(context: str, profile: UserProfile, include_categories: list[st
         needs_clarification=needs_clarification,
         clarification_questions=questions,
     )
+
+
+def _first_index(tokens: list[str], words: set[str]) -> int | None:
+    for index, token in enumerate(tokens):
+        if token in words:
+            return index
+    return None
+
+
+def _target_categories_from_mentions(
+    mentioned: list[tuple[int, str]],
+    recommend_index: int | None,
+) -> list[str]:
+    if not mentioned:
+        return []
+    if recommend_index is not None:
+        after = [category for index, category in mentioned if index > recommend_index]
+        if after:
+            return list(dict.fromkeys(after))
+    return list(dict.fromkeys(category for _, category in mentioned))
 
 
 def _taste_descriptors(context: str, profile: UserProfile) -> list[str]:

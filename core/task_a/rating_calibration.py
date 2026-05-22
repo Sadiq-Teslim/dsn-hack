@@ -4,15 +4,24 @@ from app.services.text_utils import clamp, stable_round
 from core.schemas import RatingCalibration, UserProfile
 
 
-def calibrate_rating(profile: UserProfile, sentiment: float, catalog_rating: float = 3.8) -> RatingCalibration:
+def calibrate_rating(
+    profile: UserProfile,
+    sentiment: float,
+    catalog_rating: float = 3.8,
+    base_rating: float | None = None,
+) -> RatingCalibration:
     sentiment = clamp(sentiment, 0, 1)
     sentiment_rating = 1 + sentiment * 4
+    if base_rating is None:
+        base_rating = 0.62 * sentiment_rating + 0.23 * catalog_rating + 0.15 * (profile.rating_mean or 3.8)
     user_mean = profile.rating_mean or 3.8
-    strictness_shift = (user_mean - 3.8) * 0.45
+    shift_scale = 0.22 if base_rating is None else 0.03
+    variance_scale = 0.10 if base_rating is None else 0.02
+    strictness_shift = (user_mean - 3.8) * shift_scale
     variance_shift = 0.0
     if profile.rating_std < 0.45 and profile.history_count >= 2:
-        variance_shift = (user_mean - sentiment_rating) * 0.20
-    raw_rating = 0.62 * sentiment_rating + 0.23 * catalog_rating + 0.15 * user_mean
+        variance_shift = (user_mean - base_rating) * variance_scale
+    raw_rating = base_rating
     calibrated = raw_rating + strictness_shift + variance_shift
     calibrated = stable_round(clamp(calibrated, 1.0, 5.0), 1)
     return RatingCalibration(

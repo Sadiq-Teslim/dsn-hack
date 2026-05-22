@@ -42,7 +42,7 @@ function renderPersona(selected) {
 
 function renderReview(result) {
   const evidence = result.evidence
-    .map((item) => `<span class="tag">${escapeHtml(item.title)} &middot; ${escapeHtml(item.rating)}/5</span>`)
+    .map((item) => `<span class="tag">${escapeHtml(item.source || "evidence")} &middot; ${escapeHtml(item.title)} &middot; ${escapeHtml(item.rating)}/5</span>`)
     .join("");
   const calibration = result.calibration
     ? `

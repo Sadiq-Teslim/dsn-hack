@@ -45,6 +45,8 @@ def test_generate_review_uses_fallback_without_groq_key() -> None:
     assert payload["review_text"]
     assert payload["fallback_used"] is True
     assert payload["evidence"]
+    assert payload["evidence"][0]["source"] in {"own_history", "similar_user"}
+    assert payload["evidence"][0]["retrieval_score"] is not None
     assert [step["name"] for step in payload["reasoning_trace"]["steps"]] == [
         "ResolveUserProfileStep",
         "RetrieveEvidenceStep",
@@ -73,6 +75,25 @@ def test_recommend_returns_ranked_items() -> None:
     assert payload["items"][0]["score"] >= payload["items"][-1]["score"]
     assert "LLMRerankStep" in [step["name"] for step in payload["reasoning_trace"]["steps"]]
     assert payload["session_id"]
+
+
+def test_cross_domain_recommendation_prioritizes_target_domain() -> None:
+    persona = client.get("/api/v1/demo-personas").json()[0]["persona"]
+    response = client.post(
+        "/api/v1/recommend",
+        json={
+            "user_persona": persona,
+            "context": "based on my movie taste, recommend me food for the weekend",
+            "include_categories": ["Grocery_and_Gourmet_Food"],
+            "top_k": 3,
+            "conversational": True,
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert {item["category"] for item in payload["items"]} == {"Grocery_and_Gourmet_Food"}
+    bridge = next(step for step in payload["reasoning_trace"]["steps"] if step["name"] == "CrossDomainBridgeStep")
+    assert bridge["outputs"]["is_cross_domain"] is True
 
 
 def test_fixture_evaluation_metrics() -> None:

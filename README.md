@@ -61,11 +61,12 @@ Current checked-in real Amazon Reviews 2023 subset:
 
 | Metric | Team Ace | Baseline |
 |---|---:|---:|
-| Task A RMSE | `0.7357` | `1.3133` |
-| Task B NDCG@10 | `0.0481` | `0.0194` |
-| Task B Hit Rate@10 | `0.1163` | `0.0349` |
+| Task A RMSE | `0.7421` | `1.3133` |
+| Task A raw behavioral RMSE ablation | `0.7357` | `1.3133` |
+| Task B NDCG@10 | `0.1039` | `0.0194` |
+| Task B Hit Rate@10 | `0.1860` | `0.0349` |
 
-The ranking scores are intentionally reported on a small, checked-in subset so judges can inspect and reproduce the evidence. The important signal is the ablation direction: personalization beats global rating and popularity baselines.
+The scores are intentionally reported on a small, checked-in subset so judges can inspect and reproduce the evidence. The important signal is the ablation direction: the rating model beats global mean, and the traced recommendation agent beats both the local ranker and popularity baselines.
 
 ## Deliverables
 
@@ -77,7 +78,7 @@ The ranking scores are intentionally reported on a small, checked-in subset so j
 | Task B solution paper | `docs/Task_B_Recommendation_Team_Ace.docx` |
 | Combined solution paper | `docs/BCT_Solution_Paper_Team_Ace.docx` |
 | Real Amazon subset | `data/amazon_subset/` |
-| Evaluation report | `docs/evaluation_report.json` |
+| Evaluation reports | `docs/core_evaluation_report.json`, `docs/evaluation_report.json`, `docs/nigerian_context_report.json` |
 | Deployment config | `Dockerfile`, `docker-compose.yml`, `render.yaml` |
 
 ## Quick Demo Flow
@@ -201,6 +202,8 @@ curl -X POST http://127.0.0.1:8002/api/v1/recommend ^
 
 ```bash
 python scripts/evaluate_dataset.py --data-path data/amazon_subset --output docs/evaluation_report.json
+python scripts/evaluate_core_agent.py --data-path data/amazon_subset --output docs/core_evaluation_report.json --max-examples 100
+python scripts/evaluate_nigerian_context.py
 ```
 
 ## Voice and Yarn Mode
@@ -252,6 +255,15 @@ python scripts/evaluate_dataset.py --data-path data/amazon_subset --output docs/
 ```
 
 The tests cover API behavior, schema validation, scoring, generation fallback, ranking, and cold-start handling.
+
+Current core-agent evaluation artifacts:
+
+```text
+docs/core_evaluation_report.json
+docs/nigerian_context_report.json
+```
+
+The Nigerian register library contains 50 curated examples across Nigerian Pidgin, Standard Nigerian English, Yoruba-flavoured English, Hausa-flavoured English, Igbo-flavoured English, and formal judge summaries.
 
 ## Solution Papers
 

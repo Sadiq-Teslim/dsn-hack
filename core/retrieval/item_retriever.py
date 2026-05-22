@@ -64,6 +64,12 @@ def shortlist_items(
             if item.item_id not in existing
         )
 
+    if target_categories:
+        return sorted(
+            candidates,
+            key=lambda item: (item.category in target_categories, item.local_score),
+            reverse=True,
+        )[:limit]
     return sorted(candidates, key=lambda item: item.local_score, reverse=True)[:limit]
 
 

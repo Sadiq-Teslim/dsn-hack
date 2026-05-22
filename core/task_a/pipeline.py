@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from app.config import Settings
 from app.schemas import EvidenceItem, ProductDetails, UserPersona
+from app.services.scoring import predict_rating
 from app.services.text_utils import clamp, keyword_set, stable_round
 from core.orchestration import Pipeline, Step, new_trace
 from core.retrieval import retrieve_review_examples
@@ -101,26 +102,23 @@ class PredictSentimentStep(Step):
         catalog_rating = float((catalog_item or {}).get("average_rating", 3.8))
         category_affinity = profile.category_affinity.get(product.category, profile.rating_mean)
         budget = _budget_adjustment(profile.persona.budget_level, product.price or (catalog_item or {}).get("price"))
-        sentiment = (
-            0.38 * (catalog_rating / 5)
-            + 0.28 * (category_affinity / 5)
-            + 0.22 * preference_overlap
-            - 0.18 * dislike_overlap
-            + budget
-            + 0.12
-        )
+        base_rating, _, legacy_reasoning = predict_rating(context.persona, product, catalog_item)
+        sentiment = (base_rating - 1) / 4
         sentiment = stable_round(clamp(sentiment, 0.05, 0.98))
         context.working["sentiment"] = sentiment
         context.working["catalog_rating"] = catalog_rating
+        context.working["base_rating"] = base_rating
         context.working["confidence"] = stable_round(
             clamp(0.50 + 0.05 * profile.history_count + preference_overlap * 0.25, 0.45, 0.94)
         )
         context.working["_last_step_outputs"] = {
             "_summary": "Predicted raw sentiment before converting it to a user-calibrated star rating.",
             "sentiment": sentiment,
+            "base_rating": base_rating,
             "catalog_rating": catalog_rating,
             "preference_overlap": stable_round(preference_overlap),
             "dislike_overlap": stable_round(dislike_overlap),
+            "base_reasoning": legacy_reasoning,
         }
         return context
 
@@ -131,6 +129,7 @@ class CalibrateRatingStep(Step):
             context.user_profile,
             context.working["sentiment"],
             context.working["catalog_rating"],
+            context.working["base_rating"],
         )
         context.working["calibration"] = calibration
         context.working["reasoning"] = calibration.explanation
@@ -184,15 +183,13 @@ class ConsistencyCheckStep(Step):
 
 
 def _catalog_item(catalog: list[dict], product: ProductDetails) -> dict | None:
-    return next(
-        (
-            item
-            for item in catalog
-            if item.get("title", "").lower() == product.title.lower()
-            or item.get("category") == product.category
-        ),
+    exact = next(
+        (item for item in catalog if item.get("title", "").lower() == product.title.lower()),
         None,
     )
+    if exact:
+        return exact
+    return next((item for item in catalog if item.get("category") == product.category), None)
 
 
 def _budget_adjustment(budget_level: str, price: object) -> float:

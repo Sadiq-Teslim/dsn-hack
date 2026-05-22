@@ -15,7 +15,7 @@ from PIL import Image, ImageDraw, ImageFont
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "docs" / "BCT_Solution_Paper_Team_Ace.docx"
 ASSET_DIR = ROOT / "docs" / "assets"
-EVAL_REPORT = ROOT / "docs" / "evaluation_report.json"
+EVAL_REPORT = ROOT / "docs" / "core_evaluation_report.json"
 SUBSET_METRICS = (
     ROOT / "data" / "amazon_subset" / "subset_metrics.json"
     if (ROOT / "data" / "amazon_subset" / "subset_metrics.json").exists()
@@ -348,11 +348,11 @@ def make_ablation_chart(eval_report: dict) -> Path:
 
     draw.text((70, 50), "Ablation Results: Personalized Model vs Baselines", fill=(0, 0, 0), font=title_font)
     metrics = [
-        ("Task A RMSE", eval_report.get("task_a", {}).get("global_mean_rmse", 1.3133), eval_report.get("task_a", {}).get("personalized_rmse", 0.7357), "lower is better"),
-        ("Task B NDCG@10", eval_report.get("task_b", {}).get("popularity_ndcg_at_10", 0.0194), eval_report.get("task_b", {}).get("personalized_ndcg_at_10", 0.0481), "higher is better"),
-        ("Task B Hit Rate@10", eval_report.get("task_b", {}).get("popularity_hit_rate_at_10", 0.0349), eval_report.get("task_b", {}).get("personalized_hit_rate_at_10", 0.1163), "higher is better"),
+        ("Task A RMSE", eval_report.get("task_a", {}).get("global_mean_rmse", 1.3133), eval_report.get("task_a", {}).get("agent_rmse", 0.7421), "lower is better"),
+        ("Task B NDCG@10", eval_report.get("task_b", {}).get("popularity_ndcg_at_10", 0.0194), eval_report.get("task_b", {}).get("agent_ndcg_at_10", 0.1039), "higher is better"),
+        ("Task B Hit Rate@10", eval_report.get("task_b", {}).get("popularity_hit_rate_at_10", 0.0349), eval_report.get("task_b", {}).get("agent_hit_rate_at_10", 0.1860), "higher is better"),
     ]
-    max_values = [1.4, 0.12, 0.12]
+    max_values = [1.4, 0.14, 0.22]
     for idx, (label, baseline, personalized, note) in enumerate(metrics):
         y = 150 + idx * 160
         draw.text((80, y), label, fill=(0, 0, 0), font=label_font)
@@ -481,8 +481,8 @@ def build_document() -> None:
             document,
             ["Key Result", "Team Ace", "Baseline", "Why It Matters"],
             [
-                ["Task A RMSE", str(eval_report["task_a"]["personalized_rmse"]), str(eval_report["task_a"]["global_mean_rmse"]), "Lower error from user-aware rating behavior"],
-                ["Task B NDCG@10", str(eval_report["task_b"]["personalized_ndcg_at_10"]), str(eval_report["task_b"]["popularity_ndcg_at_10"]), "About 2.5x the popularity baseline"],
+                ["Task A RMSE", str(eval_report["task_a"]["agent_rmse"]), str(eval_report["task_a"]["global_mean_rmse"]), "Lower error from user-aware rating behavior"],
+                ["Task B NDCG@10", str(eval_report["task_b"]["agent_ndcg_at_10"]), str(eval_report["task_b"]["popularity_ndcg_at_10"]), "Reasoning-assisted ranking beats popularity baseline"],
                 ["Reproducibility", "Container, tests, fallback", "Manual-only demos", "Judges can run and inspect the system"],
             ],
             [1.45, 1.2, 1.2, 2.9],
@@ -650,19 +650,19 @@ def build_document() -> None:
             [
                 [
                     "Task A RMSE",
-                    str(eval_report["task_a"]["personalized_rmse"]),
+                    str(eval_report["task_a"]["agent_rmse"]),
                     str(eval_report["task_a"]["global_mean_rmse"]),
-                    str(eval_report["ablations"]["rating_lift_vs_global_rmse"]),
+                    str(eval_report["ablations"]["agent_rmse_lift_vs_global"]),
                 ],
                 [
                     "Task B NDCG@10",
-                    str(eval_report["task_b"]["personalized_ndcg_at_10"]),
+                    str(eval_report["task_b"]["agent_ndcg_at_10"]),
                     str(eval_report["task_b"]["popularity_ndcg_at_10"]),
-                    str(eval_report["ablations"]["ranking_lift_vs_popularity_ndcg"]),
+                    str(eval_report["ablations"]["agent_ndcg_lift_vs_popularity"]),
                 ],
                 [
                     "Task B Hit Rate@10",
-                    str(eval_report["task_b"]["personalized_hit_rate_at_10"]),
+                    str(eval_report["task_b"]["agent_hit_rate_at_10"]),
                     str(eval_report["task_b"]["popularity_hit_rate_at_10"]),
                     "More held-out items recovered in top 10",
                 ],

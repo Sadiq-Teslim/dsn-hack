@@ -1,0 +1,87 @@
+{
+  "data_path": "data\\amazon_subset",
+  "evaluated_examples": 86,
+  "task_a": {
+    "agent_rmse": 0.7421,
+    "no_calibration_raw_rmse": 0.7357,
+    "global_mean_rmse": 1.3133,
+    "item_mean_rmse": 1.3117,
+    "rouge_l_f1": 0.1131
+  },
+  "task_b": {
+    "agent_ndcg_at_10": 0.1039,
+    "local_ranker_ndcg_at_10": 0.0481,
+    "popularity_ndcg_at_10": 0.0194,
+    "agent_hit_rate_at_10": 0.186,
+    "local_ranker_hit_rate_at_10": 0.1163,
+    "popularity_hit_rate_at_10": 0.0349
+  },
+  "ablations": {
+    "calibration_rmse_lift_vs_raw": -0.0064,
+    "agent_rmse_lift_vs_global": 0.5712,
+    "agent_ndcg_lift_vs_local": 0.0558,
+    "agent_ndcg_lift_vs_popularity": 0.0845
+  },
+  "examples": [
+    {
+      "user_id": "AGKHLEW2SOWHNMFQIJGBECAF7INQ",
+      "target_item": "Works great but smells a little weird.",
+      "target_rating": 4.0,
+      "predicted_rating": 4.4,
+      "generated_review": "I would give Works great but smells a little weird. 4.4 stars. It fits my taste for good value, clear quality, and the All Beauty use case is clear. For my Nigerian day-to-day, the convenience and value matter a lot. It reminds me of what I liked about such a lovely scent but not overpowering.. My only watch-out is poor value, but overall it feels like something I would recommend.",
+      "top_recommendations": [
+        "Very comfortable",
+        "nice sized !",
+        "Looks Great!"
+      ]
+    },
+    {
+      "user_id": "AFSKPY37N3C43SOI5IEXEK5JSIYA",
+      "target_item": "I just don't get it",
+      "target_rating": 3.0,
+      "predicted_rating": 4.0,
+      "generated_review": "I would give I just don't get it 4.0 stars. It fits my taste for good value, clear quality, and the All Beauty use case is clear. For my Nigerian day-to-day, the convenience and value matter a lot. It reminds me of what I liked about this really works!. My only watch-out is poor value, but overall it feels like something I would recommend.",
+      "top_recommendations": [
+        "nice sized !",
+        "Very comfortable",
+        "A Little Goes A Long Way!"
+      ]
+    },
+    {
+      "user_id": "AHGAOIZVODNHYMNCBV4DECZH42UQ",
+      "target_item": "not what it claims to do",
+      "target_rating": 1.0,
+      "predicted_rating": 2.8,
+      "generated_review": "I would give not what it claims to do 2.8 stars. It fits my taste for good value, clear quality, and the All Beauty use case is clear. For my Nigerian day-to-day, the convenience and value matter a lot. It reminds me of what I liked about nice sized !. My only watch-out is poor value, but overall it feels like something I would recommend.",
+      "top_recommendations": [
+        "nice sized !",
+        "Very comfortable",
+        "A Little Goes A Long Way!"
+      ]
+    },
+    {
+      "user_id": "AFZUK3MTBIBEDQOPAK3OATUOUKLA",
+      "target_item": "They smell good. They are just the right size",
+      "target_rating": 5.0,
+      "predicted_rating": 4.7,
+      "generated_review": "I would give They smell good. They are just the right size 4.7 stars. It fits my taste for good value, clear quality, and the All Beauty use case is clear. For my Nigerian day-to-day, the convenience and value matter a lot. It reminds me of what I liked about clip rollers. My only watch-out is poor value, but overall it feels like something I would recommend.",
+      "top_recommendations": [
+        "Very comfortable",
+        "A Little Goes A Long Way!",
+        "nice sized !"
+      ]
+    },
+    {
+      "user_id": "AH4O5W3EM4CKQGHMBVTSPCJRYF7Q",
+      "target_item": "Great for sensitive skin!",
+      "target_rating": 5.0,
+      "predicted_rating": 4.5,
+      "generated_review": "I would give Great for sensitive skin! 4.5 stars. It fits my taste for good value, clear quality, and the All Beauty use case is clear. For my Nigerian day-to-day, the convenience and value matter a lot. It reminds me of what I liked about great multi pack of bands for a great price. My only watch-out is poor value, but overall it feels like something I would recommend.",
+      "top_recommendations": [
+        "Very comfortable",
+        "Great multi pack of bands for a great price",
+        "nice sized !"
+      ]
+    }
+  ]
+}

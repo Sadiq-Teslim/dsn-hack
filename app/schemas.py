@@ -44,6 +44,9 @@ class EvidenceItem(BaseModel):
     category: str
     rating: float
     reason: str
+    source: str | None = None
+    review_text: str | None = None
+    retrieval_score: float | None = None
 
 
 class GenerateReviewResponse(BaseModel):

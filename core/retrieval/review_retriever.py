@@ -30,6 +30,9 @@ def retrieve_review_examples(
                     title=item.title,
                     category=item.category,
                     rating=item.rating,
+                    source="own_history",
+                    review_text=item.review_text,
+                    retrieval_score=stable_round(score, 3),
                     reason=(
                         f"Own-history exemplar with {stable_round(score, 2):.2f} retrieval strength; "
                         f"captures {item.category.replace('_', ' ')} tone and rating behavior."
@@ -59,6 +62,9 @@ def retrieve_review_examples(
                     title=str(review.get("title", "Amazon review exemplar")),
                     category=str(review.get("category", product.category)),
                     rating=float(review.get("rating", 3)),
+                    source="similar_user",
+                    review_text=str(review.get("review_text", "")),
+                    retrieval_score=stable_round(score, 3),
                     reason=(
                         f"Similar-user review exemplar with {stable_round(score, 2):.2f} retrieval strength."
                     ),

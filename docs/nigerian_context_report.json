@@ -1,0 +1,64 @@
+{
+  "exemplar_count": 50,
+  "register_counts": {
+    "Formal judge summary": 6,
+    "Hausa-flavoured English": 8,
+    "Igbo-flavoured English": 8,
+    "Nigerian Pidgin": 10,
+    "Standard Nigerian English": 10,
+    "Yoruba-flavoured English": 8
+  },
+  "top_tags": [
+    [
+      "family",
+      10
+    ],
+    [
+      "quality",
+      8
+    ],
+    [
+      "home",
+      8
+    ],
+    [
+      "budget",
+      7
+    ],
+    [
+      "price",
+      6
+    ],
+    [
+      "judge",
+      6
+    ],
+    [
+      "value",
+      5
+    ],
+    [
+      "food",
+      5
+    ],
+    [
+      "movie",
+      5
+    ],
+    [
+      "beauty",
+      5
+    ],
+    [
+      "routine",
+      4
+    ],
+    [
+      "practical",
+      3
+    ]
+  ],
+  "proxy_authenticity_with_context": 0.32,
+  "proxy_authenticity_without_context": 0.2,
+  "method_note": "Automated proxy only: scores local register markers and Nigerian contextual cues. This is not a substitute for the optional human authenticity rating before final submission."
+}

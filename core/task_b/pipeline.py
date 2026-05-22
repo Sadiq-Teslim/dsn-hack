@@ -24,8 +24,10 @@ async def run_task_b_pipeline(
     conversational: bool = False,
 ) -> TaskBAgentResult:
     trace = new_trace("task_b_recommendation")
-    sid, session_state = get_or_create_session(session_id, persona, context_text)
+    sid, session_state = get_or_create_session(session_id, persona, "")
     merged_context = f"{session_context(session_state)} {context_text}".strip()
+    if context_text:
+        session_state["turns"].append(context_text)
     context = AgentRuntimeContext(
         request_id=trace.request_id,
         session_id=sid,
@@ -45,7 +47,7 @@ async def run_task_b_pipeline(
         [
             ResolveUserProfileStep(),
             ParseIntentStep(),
-            CrossDomainBridgeStep(),
+            CrossDomainBridgeStep(settings),
             ColdStartGateStep(),
             CandidateShortlistStep(),
             LLMRerankStep(settings),
@@ -111,13 +113,23 @@ class ParseIntentStep(Step):
 
 
 class CrossDomainBridgeStep(Step):
+    def __init__(self, settings: Settings):
+        super().__init__()
+        self.settings = settings
+
     async def run(self, context: AgentRuntimeContext) -> AgentRuntimeContext:
-        intent = bridge_cross_domain(context.user_profile, context.working["intent"])
+        intent, fallback_used, meta = await bridge_cross_domain(
+            self.settings,
+            context.user_profile,
+            context.working["intent"],
+        )
         context.working["intent"] = intent
         context.working["_last_step_outputs"] = {
             "_summary": "Expanded abstract taste descriptors for cross-domain recommendation.",
             "taste_descriptors": intent.taste_descriptors[:12],
             "is_cross_domain": intent.is_cross_domain,
+            "bridge_fallback_used": fallback_used,
+            "llm_configured": meta.get("configured", False),
         }
         return context
 

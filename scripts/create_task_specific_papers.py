@@ -13,7 +13,7 @@ from docx.shared import Inches, Pt, RGBColor
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
 ASSETS = DOCS / "assets"
-EVAL_REPORT = DOCS / "evaluation_report.json"
+EVAL_REPORT = DOCS / "core_evaluation_report.json"
 SUBSET_METRICS = ROOT / "data" / "amazon_subset" / "subset_metrics.json"
 
 BLACK = RGBColor(0, 0, 0)
@@ -326,7 +326,7 @@ def build_task_a() -> Path:
             ["Global mean baseline", "Tests whether personalization improves beyond average rating", "Lower RMSE"],
             ["Item/category signal", "Checks product and category contribution", "Better fit for unseen items"],
             ["No retrieval evidence", "Tests review grounding", "Less specific and less faithful language"],
-            ["No Groq fallback", "Separates scoring reliability from language fluency", "Runnable but less polished text"],
+            ["No calibration guardrail", "Separates raw behavioral rating from calibrated final score", "Raw behavioral RMSE 0.7357; calibrated RMSE 0.7421"],
         ],
         [1.55, 2.6, 2.35],
     )
@@ -339,19 +339,25 @@ def build_task_a() -> Path:
         [
             [
                 "Task A RMSE",
-                str(eval_report.get("task_a", {}).get("personalized_rmse", "0.7357")),
+                str(eval_report.get("task_a", {}).get("agent_rmse", "0.7421")),
                 str(eval_report.get("task_a", {}).get("global_mean_rmse", "1.3133")),
-                "Personalized behavioral features reduce rating error.",
+                "Core agent rating path beats global mean baseline; raw behavioral score ablation is 0.7357.",
             ],
-            ["Review quality", "Grounded RAG output", "Generic text", "Review style is conditioned on history, persona, and evidence."],
+            [
+                "Review quality",
+                f"ROUGE-L F1 {eval_report.get('task_a', {}).get('rouge_l_f1', '0.1131')}",
+                "Generic text",
+                "Fallback review text is grounded in retrieved history; Groq improves fluency when configured.",
+            ],
             ["Fallback", "Supported", "Often absent", "Judges can run the endpoint without paid keys."],
         ],
         [1.25, 1.25, 1.25, 2.75],
     )
     document.add_paragraph(
         "The RMSE result matters because it shows that the review simulator is not merely a text demo. "
-        "The system makes a behavioral prediction before writing. The generated review is then a "
-        "natural-language expression of the model's decision, not the source of the decision itself."
+        "On 86 held-out Amazon interactions, the core agent records RMSE 0.7421 against a 1.3133 "
+        "global mean baseline. The raw behavioral rating ablation is 0.7357, while the calibrated "
+        "output trades a small amount of RMSE for explicit user-specific rating normalization and auditability."
     )
     document.add_heading("6. Nigerian Contextualization", level=1)
     add_table(
@@ -365,9 +371,9 @@ def build_task_a() -> Path:
         [1.55, 2.2, 2.75],
     )
     document.add_paragraph(
-        "Yarn Mode and YarnGPT audio are output layers for accessibility and local resonance. They do "
-        "not change the underlying rating score; they make the explanation easier to present in a "
-        "Nigerian demo context."
+        "Yarn Mode and YarnGPT audio are output layers for accessibility and local resonance. The Nigerian "
+        "register library now contains 50 curated examples across Pidgin, Standard Nigerian English, "
+        "Yoruba-flavoured, Hausa-flavoured, Igbo-flavoured, and formal judge registers."
     )
 
     document.add_heading("7. Demo, Reproducibility, and Next Steps", level=1)
@@ -419,9 +425,10 @@ def build_task_b() -> Path:
     )
     document.add_paragraph(
         "The system is designed for the hard cases in the rubric: cold-start, cross-domain, contextual "
-        "relevance, and conversational explanation. Groq improves the natural-language summary after "
-        "the ranked list is already produced. Yarn Mode can then localize the explanation for Nigerian "
-        "Pidgin or Nigerian-flavoured English voice output."
+        "relevance, and conversational explanation. Groq re-ranks the locally shortlisted candidate set "
+        "with reasoning when configured; deterministic fallback preserves the same API when no key is "
+        "available. Yarn Mode can then localize the explanation for Nigerian Pidgin or Nigerian-flavoured "
+        "English voice output."
     )
     add_table(
         document,
@@ -453,10 +460,10 @@ def build_task_b() -> Path:
         document,
         ["Aspect", "Typical Approach", "Team Ace Approach", "Advantage"],
         [
-            ["Ranking", "Popularity or opaque LLM output", "Local scoring before explanation", "Auditable recommendation order"],
+            ["Ranking", "Popularity or opaque LLM output", "Local shortlist plus LLM-assisted re-ranking", "Auditable recommendation order with reasoning"],
             ["Cold-start", "Weak without history", "Uses persona fields and context text", "Useful from first interaction"],
             ["Cross-domain", "Single catalog type", "Beauty, grocery, movies, games", "Better reflects real routines"],
-            ["Explanation", "Generic reason text", "Groq explains validated ranked list", "Fluent but controlled"],
+            ["Explanation", "Generic reason text", "Decision trace plus natural-language explanation", "Fluent but controlled"],
         ],
         [1.1, 1.65, 2.35, 1.4],
     )
@@ -476,8 +483,8 @@ def build_task_b() -> Path:
             "Read the current context prompt and extract immediate need signals.",
             "Generate candidates from the catalog across allowed categories.",
             "Score each candidate using popularity, average rating, category fit, text match, preference match, budget fit, and dislike penalties.",
-            "Apply ranking and diversity logic to produce the top recommendations.",
-            "Ask Groq to summarize the already-ranked list; use deterministic fallback when unavailable.",
+            "Ask Groq to re-rank the shortlisted candidates with grounded reasoning when configured.",
+            "Apply diversity logic to produce the top recommendations and return the decision trace.",
         ],
     )
     add_table(
@@ -486,8 +493,8 @@ def build_task_b() -> Path:
         [
             ["Persona modeling", "Turns user history and stated profile into ranking features."],
             ["Candidate generation", "Builds a cross-domain pool from the local catalog."],
-            ["Ranking engine", "Scores items locally and returns deterministic ordering."],
-            ["Explanation layer", "Uses Groq to explain the ranked list without changing it."],
+            ["Ranking engine", "Combines local scores with LLM-assisted re-ranking over a shortlisted candidate set."],
+            ["Explanation layer", "Returns the same decision trace used to rank, then explains recommendations in natural language."],
             ["Voice layer", "Uses Yarn Mode and YarnGPT for local-language presentation."],
         ],
         [1.55, 4.95],
@@ -507,7 +514,7 @@ def build_task_b() -> Path:
             ["Popularity baseline", "Measures whether personalization beats generic item popularity", "Higher NDCG@10 and Hit Rate@10"],
             ["Cold-start personas", "Checks if recommendations work with sparse history", "Reasonable rankings from stated context"],
             ["Cross-domain ranking", "Tests ranking across all selected Amazon categories", "Useful mixed-category lists"],
-            ["No Groq explanation", "Separates ranking quality from language polish", "Same ranking remains available"],
+            ["No LLM re-ranking", "Separates local shortlist quality from reasoning-assisted reranking", "Local ranker NDCG@10 0.0481 versus core agent 0.1039"],
         ],
         [1.55, 2.6, 2.35],
     )
@@ -526,13 +533,13 @@ def build_task_b() -> Path:
         [
             [
                 "NDCG@10",
-                str(eval_report.get("task_b", {}).get("personalized_ndcg_at_10", "0.0481")),
+                str(eval_report.get("task_b", {}).get("agent_ndcg_at_10", "0.1039")),
                 str(eval_report.get("task_b", {}).get("popularity_ndcg_at_10", "0.0194")),
-                "Personalized ranking places held-out choices higher.",
+                "Core agent reranking places held-out choices higher than popularity.",
             ],
             [
                 "Hit Rate@10",
-                str(eval_report.get("task_b", {}).get("personalized_hit_rate_at_10", "0.1163")),
+                str(eval_report.get("task_b", {}).get("agent_hit_rate_at_10", "0.1860")),
                 str(eval_report.get("task_b", {}).get("popularity_hit_rate_at_10", "0.0349")),
                 "More held-out items appear in the top 10.",
             ],
@@ -558,7 +565,9 @@ def build_task_b() -> Path:
     )
     document.add_paragraph(
         "The Nigerian layer is not decoration. It changes recommendation reasons around affordability, "
-        "shared use, family setting, weather, work routines, and language preference."
+        "shared use, family setting, weather, work routines, and language preference. The current register "
+        "library contains 50 curated examples and is measured with an automated marker-coverage proxy; "
+        "a human authenticity rating remains the final optional validation step before live presentation."
     )
 
     document.add_heading("7. Demo, Reproducibility, and Next Steps", level=1)

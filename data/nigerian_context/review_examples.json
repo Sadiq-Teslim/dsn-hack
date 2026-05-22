@@ -1,86 +1,52 @@
 [
-  {
-    "id": "pidgin-value-01",
-    "register": "Nigerian Pidgin",
-    "tone": "casual value-focused",
-    "text": "For the price, this one make sense. E no perfect, but e do the work well and I no regret buying am.",
-    "tags": ["budget", "value", "practical"]
-  },
-  {
-    "id": "pidgin-complaint-01",
-    "register": "Nigerian Pidgin",
-    "tone": "direct complaint",
-    "text": "The idea good but the execution no reach. I expected better quality because the price no small.",
-    "tags": ["overpriced", "quality", "complaint"]
-  },
-  {
-    "id": "standard-lagos-01",
-    "register": "Standard Nigerian English",
-    "tone": "casual Lagos practical",
-    "text": "It fits a busy Lagos routine: quick to use, not too stressful, and useful enough to justify the money.",
-    "tags": ["lagos", "routine", "budget"]
-  },
-  {
-    "id": "standard-family-01",
-    "register": "Standard Nigerian English",
-    "tone": "warm family shopper",
-    "text": "I like that it works for the whole house. It is easy to share when visitors come around and still feels like good value.",
-    "tags": ["family", "visitors", "home"]
-  },
-  {
-    "id": "yoruba-light-01",
-    "register": "Yoruba-flavoured English",
-    "tone": "light approving",
-    "text": "For me, this one is actually okay. O da, especially if you want something simple that will not waste your money.",
-    "tags": ["simple", "budget", "approval"]
-  },
-  {
-    "id": "yoruba-light-02",
-    "register": "Yoruba-flavoured English",
-    "tone": "measured caveat",
-    "text": "It is useful, sha, but I would not call it premium. If the price drops a little, it becomes an easier recommendation.",
-    "tags": ["price", "measured", "caveat"]
-  },
-  {
-    "id": "hausa-light-01",
-    "register": "Hausa-flavoured English",
-    "tone": "practical",
-    "text": "Gaskiya, it is a sensible pick if you need something dependable. The main thing is that it does not waste time.",
-    "tags": ["dependable", "practical", "routine"]
-  },
-  {
-    "id": "hausa-light-02",
-    "register": "Hausa-flavoured English",
-    "tone": "polite complaint",
-    "text": "The product is fine, but ba sosai ba. I expected stronger performance for this kind of price.",
-    "tags": ["performance", "price", "complaint"]
-  },
-  {
-    "id": "igbo-light-01",
-    "register": "Igbo-flavoured English",
-    "tone": "warm approval",
-    "text": "This one is useful, honestly. Ọ dị mma for everyday use, especially when you want something that will last.",
-    "tags": ["durable", "everyday", "approval"]
-  },
-  {
-    "id": "igbo-light-02",
-    "register": "Igbo-flavoured English",
-    "tone": "family value",
-    "text": "I like it more because the family can use it. No long story, it gives value and does not feel wasteful.",
-    "tags": ["family", "value", "home"]
-  },
-  {
-    "id": "formal-judge-01",
-    "register": "Formal judge summary",
-    "tone": "formal evaluation",
-    "text": "The output is grounded in user-specific constraints: budget, category preference, prior ratings, and contextual use.",
-    "tags": ["judge", "evaluation", "reasoning"]
-  },
-  {
-    "id": "formal-judge-02",
-    "register": "Formal judge summary",
-    "tone": "formal ablation",
-    "text": "The explanation reflects a behavioral decision made before generation, rather than a generic language-model response.",
-    "tags": ["judge", "agentic", "scoring"]
-  }
+  {"id":"pidgin-value-01","register":"Nigerian Pidgin","tone":"casual value-focused","text":"For the price, this one make sense. E no perfect, but e do the work well and I no regret buying am.","tags":["budget","value","practical"]},
+  {"id":"pidgin-value-02","register":"Nigerian Pidgin","tone":"student budget","text":"If you dey manage money, this one still try. The quality good enough and e no stress to use every day.","tags":["student","budget","routine"]},
+  {"id":"pidgin-value-03","register":"Nigerian Pidgin","tone":"market comparison","text":"I don see cheaper ones, but this one balance price and quality better. Na fair buy if you need am sharp sharp.","tags":["price","quality","comparison"]},
+  {"id":"pidgin-complaint-01","register":"Nigerian Pidgin","tone":"direct complaint","text":"The idea good but the execution no reach. I expected better quality because the price no small.","tags":["overpriced","quality","complaint"]},
+  {"id":"pidgin-complaint-02","register":"Nigerian Pidgin","tone":"delivery frustration","text":"E work, but the packaging weak. By the time I open am, the thing don already look somehow.","tags":["packaging","complaint","quality"]},
+  {"id":"pidgin-food-01","register":"Nigerian Pidgin","tone":"food approval","text":"The taste no bad at all. E get that home feeling, and I fit serve am when people come around.","tags":["food","visitors","home"]},
+  {"id":"pidgin-movie-01","register":"Nigerian Pidgin","tone":"movie reaction","text":"The story hold me small. Some parts slow, but the funny moments and family wahala make am enjoyable.","tags":["movie","family","comedy"]},
+  {"id":"pidgin-beauty-01","register":"Nigerian Pidgin","tone":"beauty practical","text":"For hot weather, e try. My face no too shine, and e no give me that heavy cream feeling.","tags":["beauty","heat","daily"]},
+  {"id":"pidgin-game-01","register":"Nigerian Pidgin","tone":"game night","text":"This one sweet pass when friends dey around. Solo play okay, but multiplayer na where e really shine.","tags":["games","friends","multiplayer"]},
+  {"id":"pidgin-family-01","register":"Nigerian Pidgin","tone":"family shopper","text":"Everybody for house fit use am, so the money no waste. Na practical buy, no long talk.","tags":["family","home","value"]},
+  {"id":"standard-lagos-01","register":"Standard Nigerian English","tone":"casual Lagos practical","text":"It fits a busy Lagos routine: quick to use, not too stressful, and useful enough to justify the money.","tags":["lagos","routine","budget"]},
+  {"id":"standard-lagos-02","register":"Standard Nigerian English","tone":"commuter value","text":"For someone moving between work, traffic, and errands, convenience matters. This is easy to carry and easy to justify.","tags":["lagos","commute","convenience"]},
+  {"id":"standard-lagos-03","register":"Standard Nigerian English","tone":"student review","text":"I like that it does not demand too much setup. For school weeks, I need things that work quickly and stay affordable.","tags":["student","school","budget"]},
+  {"id":"standard-abuja-01","register":"Standard Nigerian English","tone":"professional measured","text":"It feels polished enough for daily use, but the value is what matters. I would recommend it if the price stays reasonable.","tags":["work","quality","price"]},
+  {"id":"standard-abuja-02","register":"Standard Nigerian English","tone":"premium caveat","text":"The finish is good and the experience feels premium. My only concern is whether the performance fully matches the price.","tags":["premium","performance","price"]},
+  {"id":"standard-family-01","register":"Standard Nigerian English","tone":"warm family shopper","text":"I like that it works for the whole house. It is easy to share when visitors come around and still feels like good value.","tags":["family","visitors","home"]},
+  {"id":"standard-family-02","register":"Standard Nigerian English","tone":"home utility","text":"This is the kind of product I prefer for home use: simple, reliable, and not something children will struggle with.","tags":["family","children","home"]},
+  {"id":"standard-food-01","register":"Standard Nigerian English","tone":"food practical","text":"The flavour is familiar without being boring. I can see it working well for quick meals or when guests arrive unexpectedly.","tags":["food","guests","quick"]},
+  {"id":"standard-movie-01","register":"Standard Nigerian English","tone":"movie thoughtful","text":"The story is easy to follow, but it still has enough emotional weight to make a weekend watch feel worthwhile.","tags":["movie","weekend","story"]},
+  {"id":"standard-beauty-01","register":"Standard Nigerian English","tone":"beauty routine","text":"It works nicely for a daily routine in humid weather. I appreciate that it does not feel heavy after a few hours.","tags":["beauty","humidity","daily"]},
+  {"id":"yoruba-light-01","register":"Yoruba-flavoured English","tone":"light approving","text":"For me, this one is actually okay. O da, especially if you want something simple that will not waste your money.","tags":["simple","budget","approval"]},
+  {"id":"yoruba-light-02","register":"Yoruba-flavoured English","tone":"measured caveat","text":"It is useful, sha, but I would not call it premium. If the price drops a little, it becomes an easier recommendation.","tags":["price","measured","caveat"]},
+  {"id":"yoruba-light-03","register":"Yoruba-flavoured English","tone":"family approval","text":"E je ka so truth, it is practical for the house. Everybody can use it without plenty explanation.","tags":["family","home","practical"]},
+  {"id":"yoruba-light-04","register":"Yoruba-flavoured English","tone":"student casual","text":"As a student, I just need something that works. This one try, and the price is not too painful.","tags":["student","budget","simple"]},
+  {"id":"yoruba-light-05","register":"Yoruba-flavoured English","tone":"quality check","text":"The quality is not bad rara. I only wish the packaging felt stronger because the product itself is useful.","tags":["quality","packaging","useful"]},
+  {"id":"yoruba-light-06","register":"Yoruba-flavoured English","tone":"movie reaction","text":"The film has good moments, sha. Some scenes drag, but the family drama makes it easy to finish.","tags":["movie","family","drama"]},
+  {"id":"yoruba-light-07","register":"Yoruba-flavoured English","tone":"beauty routine","text":"For daily use, o dara. It sits well on the skin and does not disturb me in hot weather.","tags":["beauty","daily","heat"]},
+  {"id":"yoruba-light-08","register":"Yoruba-flavoured English","tone":"food approval","text":"The taste is okay gan. I would still add my own spice, but it works when you need something quick.","tags":["food","quick","taste"]},
+  {"id":"hausa-light-01","register":"Hausa-flavoured English","tone":"practical","text":"Gaskiya, it is a sensible pick if you need something dependable. The main thing is that it does not waste time.","tags":["dependable","practical","routine"]},
+  {"id":"hausa-light-02","register":"Hausa-flavoured English","tone":"polite complaint","text":"The product is fine, but ba sosai ba. I expected stronger performance for this kind of price.","tags":["performance","price","complaint"]},
+  {"id":"hausa-light-03","register":"Hausa-flavoured English","tone":"work routine","text":"For office days, this is useful. It is simple, neat, and does not add extra stress to the morning.","tags":["work","routine","simple"]},
+  {"id":"hausa-light-04","register":"Hausa-flavoured English","tone":"family home","text":"It works well for the house, wallahi. The value is clear because more than one person can use it.","tags":["family","home","value"]},
+  {"id":"hausa-light-05","register":"Hausa-flavoured English","tone":"budget check","text":"The price is a bit high, but the quality is there. If it lasts, then no problem.","tags":["price","quality","durable"]},
+  {"id":"hausa-light-06","register":"Hausa-flavoured English","tone":"food review","text":"The flavour is gentle and nice. Ba too much ba, so it can work for different people at home.","tags":["food","family","flavour"]},
+  {"id":"hausa-light-07","register":"Hausa-flavoured English","tone":"movie review","text":"The story is serious but not tiring. I liked the way the characters had clear motives.","tags":["movie","story","drama"]},
+  {"id":"hausa-light-08","register":"Hausa-flavoured English","tone":"beauty review","text":"It feels light on the skin, gaskiya. I can use it in the afternoon without feeling uncomfortable.","tags":["beauty","skin","heat"]},
+  {"id":"igbo-light-01","register":"Igbo-flavoured English","tone":"warm approval","text":"This one is useful, honestly. O di mma for everyday use, especially when you want something that will last.","tags":["durable","everyday","approval"]},
+  {"id":"igbo-light-02","register":"Igbo-flavoured English","tone":"family value","text":"I like it more because the family can use it. No long story, it gives value and does not feel wasteful.","tags":["family","value","home"]},
+  {"id":"igbo-light-03","register":"Igbo-flavoured English","tone":"business owner","text":"For the price, it makes sense. As someone watching expenses, I need quality that will not fail quickly.","tags":["business","budget","quality"]},
+  {"id":"igbo-light-04","register":"Igbo-flavoured English","tone":"direct caveat","text":"O di okay, but I expected a stronger finish. It works, just not at the premium level they are suggesting.","tags":["premium","caveat","quality"]},
+  {"id":"igbo-light-05","register":"Igbo-flavoured English","tone":"food home","text":"The taste is familiar and easy to serve. It is not perfect, but guests will not complain.","tags":["food","guests","home"]},
+  {"id":"igbo-light-06","register":"Igbo-flavoured English","tone":"movie family","text":"The family scenes carried the film for me. Some parts were predictable, but it still had heart.","tags":["movie","family","emotion"]},
+  {"id":"igbo-light-07","register":"Igbo-flavoured English","tone":"beauty harmattan","text":"During dry weather, this one helps. O di mma because the skin stays soft for longer.","tags":["beauty","harmattan","skin"]},
+  {"id":"igbo-light-08","register":"Igbo-flavoured English","tone":"game practical","text":"It is more enjoyable when people are around. Solo mode is fine, but group play gives better value.","tags":["games","friends","value"]},
+  {"id":"formal-judge-01","register":"Formal judge summary","tone":"formal evaluation","text":"The output is grounded in user-specific constraints: budget, category preference, prior ratings, and contextual use.","tags":["judge","evaluation","reasoning"]},
+  {"id":"formal-judge-02","register":"Formal judge summary","tone":"formal ablation","text":"The explanation reflects a behavioral decision made before generation, rather than a generic language-model response.","tags":["judge","agentic","scoring"]},
+  {"id":"formal-judge-03","register":"Formal judge summary","tone":"architecture","text":"The system separates numerical decision-making from language generation, improving auditability and reproducibility.","tags":["judge","architecture","reproducibility"]},
+  {"id":"formal-judge-04","register":"Formal judge summary","tone":"cold-start","text":"The cold-start flow asks for preference evidence before ranking, reducing unsupported recommendation guesses.","tags":["judge","cold-start","recommendation"]},
+  {"id":"formal-judge-05","register":"Formal judge summary","tone":"cross-domain","text":"Cross-domain ranking transfers abstract taste descriptors into the target category before item selection.","tags":["judge","cross-domain","ranking"]},
+  {"id":"formal-judge-06","register":"Formal judge summary","tone":"localization","text":"Nigerian context is represented as structured register examples, not a vague instruction to sound local.","tags":["judge","nigerian","localization"]}
 ]

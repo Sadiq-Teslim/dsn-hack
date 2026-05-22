@@ -61,7 +61,7 @@ async def llm_rerank_candidates(
             reranked.append(candidate)
         if reranked:
             remaining = [item for item in candidates if item.title.lower() not in {r.title.lower() for r in reranked}]
-            return sorted(reranked, key=lambda item: item.score, reverse=True) + remaining, bool(meta.get("fallback_used")), meta
+            return _sort_for_intent(reranked, intent) + remaining, bool(meta.get("fallback_used")), meta
 
     fallback = []
     for candidate in candidates:
@@ -69,7 +69,18 @@ async def llm_rerank_candidates(
         candidate.score = candidate.local_score
         candidate.reason = _fallback_reason(profile, intent, candidate)
         fallback.append(candidate)
-    return sorted(fallback, key=lambda item: item.score, reverse=True), True, meta
+    return _sort_for_intent(fallback, intent), True, meta
+
+
+def _sort_for_intent(candidates: list[CandidateItem], intent: IntentSignal) -> list[CandidateItem]:
+    target_categories = set(intent.target_categories)
+    if target_categories:
+        return sorted(
+            candidates,
+            key=lambda item: (item.category in target_categories, item.score),
+            reverse=True,
+        )
+    return sorted(candidates, key=lambda item: item.score, reverse=True)
 
 
 def _safe_score(value: object, fallback: float) -> float:

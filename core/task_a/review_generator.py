@@ -20,7 +20,8 @@ async def generate_grounded_review(
         f"- {item.text}" for item in retrieve_nigerian_exemplars(profile, product.description, limit=4)
     )
     evidence_text = "\n".join(
-        f"- {item.title} ({item.category}, {item.rating}/5): {item.reason}" for item in evidence
+        f"- {item.title} ({item.category}, {item.rating}/5, {item.source or 'evidence'}): "
+        f"{item.review_text or item.reason}" for item in evidence
     )
     persona = profile.persona
     messages = [
