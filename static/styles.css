@@ -670,6 +670,24 @@ div {
   padding: 0 18px;
 }
 
+.composer-shell .composer-icon-button {
+  width: 42px;
+  height: 42px;
+  min-height: 42px;
+  flex: 0 0 42px;
+  padding: 0;
+}
+
+.composer-icon-button svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .chat-thread {
   display: grid;
   gap: 0;
