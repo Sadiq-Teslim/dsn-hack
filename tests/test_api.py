@@ -160,6 +160,25 @@ def test_weekly_utility_query_prioritizes_practical_categories() -> None:
     assert "Movies_and_TV" not in categories[:2]
 
 
+def test_recommendation_respects_excluded_categories() -> None:
+    persona = client.get("/api/v1/demo-personas").json()[0]["persona"]
+    response = client.post(
+        "/api/v1/recommend",
+        json={
+            "user_persona": persona,
+            "context": "Recommend something fun for the weekend but no movies.",
+            "top_k": 5,
+            "conversational": True,
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["items"]
+    assert "Movies_and_TV" not in {item["category"] for item in payload["items"]}
+    parse_step = next(step for step in payload["reasoning_trace"]["steps"] if step["name"] == "ParseIntentStep")
+    assert "Movies_and_TV" in parse_step["outputs"]["excluded_categories"]
+
+
 def test_fixture_evaluation_metrics() -> None:
     response = client.get("/api/v1/evaluation")
     assert response.status_code == 200

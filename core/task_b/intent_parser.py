@@ -41,11 +41,12 @@ def parse_intent(context: str, profile: UserProfile, include_categories: list[st
     token_list = tokenize(context)
     tokens = set(token_list)
     max_price, max_price_exclusive = _extract_max_price(context)
+    excluded_categories = _excluded_categories_from_context(token_list)
     categories = list(include_categories)
     mentioned = [
         (index, CATEGORY_ALIASES[token])
         for index, token in enumerate(token_list)
-        if token in CATEGORY_ALIASES
+        if token in CATEGORY_ALIASES and CATEGORY_ALIASES[token] not in excluded_categories
     ]
     recommend_index = _first_index(token_list, {"recommend", "suggest", "show", "find"})
     if include_categories:
@@ -57,11 +58,11 @@ def parse_intent(context: str, profile: UserProfile, include_categories: list[st
     else:
         target_mentions = _target_categories_from_mentions(mentioned, recommend_index)
     for category in target_mentions:
-        if category not in categories:
+        if category not in categories and category not in excluded_categories:
             categories.append(category)
     if not categories:
         for category in _infer_practical_categories(tokens):
-            if category not in categories:
+            if category not in categories and category not in excluded_categories:
                 categories.append(category)
     constraints = [
         token
@@ -107,6 +108,7 @@ def parse_intent(context: str, profile: UserProfile, include_categories: list[st
         raw_context=context,
         target_categories=categories,
         unsupported_targets=[],
+        excluded_categories=excluded_categories,
         constraints=constraints,
         max_price=max_price,
         max_price_exclusive=max_price_exclusive,
@@ -116,6 +118,19 @@ def parse_intent(context: str, profile: UserProfile, include_categories: list[st
         needs_clarification=needs_clarification,
         clarification_questions=questions,
     )
+
+
+def _excluded_categories_from_context(tokens: list[str]) -> list[str]:
+    excluded = []
+    negators = {"no", "not", "without", "exclude", "excluding", "except", "avoid", "dont", "don't"}
+    for index, token in enumerate(tokens):
+        category = CATEGORY_ALIASES.get(token)
+        if not category:
+            continue
+        previous = set(tokens[max(0, index - 4):index])
+        if previous & negators and category not in excluded:
+            excluded.append(category)
+    return excluded
 
 
 def _extract_max_price(context: str) -> tuple[float | None, bool]:

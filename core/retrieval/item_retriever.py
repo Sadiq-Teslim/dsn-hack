@@ -69,6 +69,8 @@ def _score_products(
     candidates: list[CandidateItem] = []
 
     for product in products:
+        if product.get("category") in set(intent.excluded_categories):
+            continue
         if target_categories and product.get("category") not in target_categories:
             continue
         if not _within_price_limit(product.get("price"), intent):

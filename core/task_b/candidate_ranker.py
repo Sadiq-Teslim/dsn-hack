@@ -44,6 +44,7 @@ async def llm_rerank_candidates(
                 f"dislikes {profile.persona.dislikes}, taste tokens {profile.taste_tokens[:12]}.\n"
                 f"Context: {intent.raw_context or 'No explicit context'}\n"
                 f"Intent descriptors: {intent.taste_descriptors}\n"
+                f"Excluded categories: {intent.excluded_categories or 'none'}\n"
                 f"Maximum price: {intent.max_price if intent.max_price is not None else 'none'}"
                 f"{' exclusive' if intent.max_price_exclusive else ''}\n"
                 f"Candidates:\n{candidate_lines}\n"

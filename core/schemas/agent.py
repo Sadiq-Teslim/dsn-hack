@@ -81,6 +81,7 @@ class IntentSignal(BaseModel):
     raw_context: str = ""
     target_categories: list[str] = Field(default_factory=list)
     unsupported_targets: list[str] = Field(default_factory=list)
+    excluded_categories: list[str] = Field(default_factory=list)
     constraints: list[str] = Field(default_factory=list)
     max_price: float | None = None
     max_price_exclusive: bool = False

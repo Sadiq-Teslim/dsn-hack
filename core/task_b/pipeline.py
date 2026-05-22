@@ -106,6 +106,7 @@ class ParseIntentStep(Step):
         context.working["_last_step_outputs"] = {
             "_summary": "Parsed recommendation intent, constraints, and scenario type.",
             "target_categories": intent.target_categories,
+            "excluded_categories": intent.excluded_categories,
             "constraints": intent.constraints,
             "max_price": intent.max_price,
             "max_price_exclusive": intent.max_price_exclusive,
@@ -168,6 +169,11 @@ class CandidateShortlistStep(Step):
             for category in intent.target_categories
             if category not in available_categories
         ]
+        excluded = [
+            category
+            for category in intent.excluded_categories
+            if category in available_categories
+        ]
         if unsupported:
             intent.unsupported_targets = unsupported
             context.working["intent"] = intent
@@ -183,6 +189,7 @@ class CandidateShortlistStep(Step):
             "candidate_count": len(candidates),
             "top_candidates": [item.title for item in candidates[:5]],
             "unsupported_targets": unsupported,
+            "excluded_categories": excluded,
             "max_price": intent.max_price,
         }
         return context
@@ -283,6 +290,7 @@ async def _formalize_visible_response(
         f"{item.rank}. {item.title} | {item.category.replace('_', ' ')} | price={item.price} | reason={item.reason}"
         for item in items
     ) or "No available options matched all stated requirements."
+    excluded_text = ", ".join(category.replace("_", " ") for category in intent.excluded_categories) or "None"
     parsed, meta = await llm.json_chat(
         [
             {
@@ -305,6 +313,7 @@ async def _formalize_visible_response(
                     f"User name: {name}\n"
                     f"User request: {intent.raw_context}\n"
                     f"Target categories: {', '.join(category.replace('_', ' ') for category in intent.target_categories) or 'Any'}\n"
+                    f"Excluded categories: {excluded_text}\n"
                     f"Draft summary: {fallback_summary}\n"
                     f"Items:\n{item_lines}\n"
                     "Rewrite the summary and each item reason for display to the user."
@@ -363,8 +372,11 @@ def _summary(name: str, intent, items: list[RecommendedItem]) -> str:
     if intent.target_categories:
         category_text = " in " + ", ".join(category.replace("_", " ") for category in intent.target_categories)
     price_text = f" {_price_note(intent)}" if intent.max_price is not None else ""
+    exclusion_text = ""
+    if intent.excluded_categories:
+        exclusion_text = ", excluding " + ", ".join(category.replace("_", " ") for category in intent.excluded_categories)
     return (
-        f"I found {len(items)} suitable options for {name}{category_text}{price_text}{scenario_text}. "
+        f"I found {len(items)} suitable options for {name}{category_text}{price_text}{exclusion_text}{scenario_text}. "
         f"The leading recommendation is {top.title}, because {top.reason}"
     )
 
