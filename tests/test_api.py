@@ -54,6 +54,7 @@ def test_generate_review_uses_fallback_without_groq_key() -> None:
         "CalibrateRatingStep",
         "GenerateReviewStep",
         "ConsistencyCheckStep",
+        "FormalizeReviewReasoningStep",
     ]
     assert payload["calibration"]["calibrated_rating"] == payload["rating"]
 
@@ -74,6 +75,13 @@ def test_recommend_returns_ranked_items() -> None:
     assert [item["rank"] for item in payload["items"]] == [1, 2, 3]
     assert payload["items"][0]["score"] >= payload["items"][-1]["score"]
     assert "LLMRerankStep" in [step["name"] for step in payload["reasoning_trace"]["steps"]]
+    visible_text = " ".join(
+        [payload["reasoning"], *[item["reason"] for item in payload["items"]]]
+    ).lower()
+    assert "llm" not in visible_text
+    assert "retrieval" not in visible_text
+    assert "candidate" not in visible_text
+    assert "catalog" not in visible_text
     assert payload["session_id"]
 
 

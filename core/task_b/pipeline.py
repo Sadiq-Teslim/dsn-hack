@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import re
+
 from app.config import Settings
 from app.schemas import RecommendedItem, UserPersona
-from core.orchestration import Pipeline, Step, new_trace
+from core.orchestration import CoreLLMClient, Pipeline, Step, new_trace
 from core.retrieval import shortlist_items
 from core.schemas import AgentDecisionStatus, AgentRuntimeContext, CandidateItem, TaskBAgentResult
 from core.task_b.candidate_ranker import llm_rerank_candidates
@@ -247,14 +249,85 @@ class BuildRecommendationResponseStep(Step):
             )
             for index, item in enumerate(selected)
         ]
+        items, reasoning, presentation_fallback, presentation_meta = await _formalize_visible_response(
+            self.settings,
+            context.user_profile.persona.name,
+            context.working["intent"],
+            items,
+        )
         context.working["items"] = items
-        context.working["reasoning"] = _summary(context.user_profile.persona.name, context.working["intent"], items)
+        context.working["reasoning"] = reasoning
+        context.working["fallback_used"] = bool(context.working.get("fallback_used")) or presentation_fallback
         context.working["_last_step_outputs"] = {
-            "_summary": "Built final ranked recommendation response with per-item reasoning.",
+            "_summary": "Built final visible recommendation response.",
             "item_count": len(items),
             "session_id": context.session_id,
+            "presentation_fallback_used": presentation_fallback,
+            "presentation_llm_configured": presentation_meta.get("configured", False),
         }
         return context
+
+
+async def _formalize_visible_response(
+    settings: Settings,
+    name: str,
+    intent,
+    items: list[RecommendedItem],
+) -> tuple[list[RecommendedItem], str, bool, dict]:
+    fallback_summary = _summary(name, intent, items)
+    llm = CoreLLMClient(settings)
+    if not items:
+        return items, fallback_summary, not llm.configured, {"configured": llm.configured}
+
+    item_lines = "\n".join(
+        f"{item.rank}. {item.title} | {item.category.replace('_', ' ')} | price={item.price} | reason={item.reason}"
+        for item in items
+    )
+    parsed, meta = await llm.json_chat(
+        [
+            {
+                "role": "system",
+                "content": (
+                    "You write polished recommendation copy for an end user. Return strict JSON only. "
+                    "Schema: {\"summary\":\"formal summary\", \"items\":[{\"title\":\"exact title\", "
+                    "\"reason\":\"formal user-facing reason\"}]}. Use only the supplied item titles. "
+                    "Use a formal, concise, helpful tone. Do not mention technical terms such as LLM, AI, "
+                    "model, reranker, retrieval, candidate, score, signal, metadata, catalog, pipeline, "
+                    "trace, algorithm, or system. Do not discuss internal methods. Do not over-explain."
+                ),
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"User name: {name}\n"
+                    f"User request: {intent.raw_context}\n"
+                    f"Target categories: {', '.join(category.replace('_', ' ') for category in intent.target_categories) or 'Any'}\n"
+                    f"Draft summary: {fallback_summary}\n"
+                    f"Items:\n{item_lines}\n"
+                    "Rewrite the summary and each item reason for display to the user."
+                ),
+            },
+        ],
+        temperature=0.18,
+        attempts=3,
+    )
+    if not parsed:
+        return items, fallback_summary, True, meta
+
+    summary = str(parsed.get("summary", "")).strip()
+    rewritten = parsed.get("items")
+    if not summary or not isinstance(rewritten, list):
+        return items, fallback_summary, True, meta
+
+    by_title = {item.title: item for item in items}
+    for row in rewritten:
+        if not isinstance(row, dict):
+            continue
+        title = str(row.get("title", ""))
+        reason = str(row.get("reason", "")).strip()
+        if title in by_title and len(reason) > 20:
+            by_title[title].reason = _clean_visible_text(reason)
+    return items, _clean_visible_text(summary), bool(meta.get("fallback_used")), meta
 
 
 def _summary(name: str, intent, items: list[RecommendedItem]) -> str:
@@ -263,24 +336,47 @@ def _summary(name: str, intent, items: list[RecommendedItem]) -> str:
             available = "Grocery, Movies and TV, Video Games, Beauty, and Books"
             targets = ", ".join(category.replace("_", " ") for category in intent.unsupported_targets)
             return (
-                f"I could not rank {targets} because that category is not loaded in this demo catalog. "
+                f"I could not prepare {targets} recommendations because that category is not available in this demo collection. "
                 f"Available demo categories are {available}."
             )
-        return "No items matched the current constraints. Try a broader request or another available category."
+        return "I could not find a suitable match for the current request. Please try a broader request or choose another available category."
     top = items[0]
     scenario = []
     if intent.is_cold_start:
-        scenario.append("cold-start")
+        scenario.append("new preference profile")
     if intent.is_cross_domain:
-        scenario.append("cross-domain")
+        scenario.append("cross-category")
     if intent.unsupported_targets:
-        scenario.append("partial catalog match")
+        scenario.append("partial category match")
     scenario_text = f" ({', '.join(scenario)})" if scenario else ""
     category_text = ""
     if intent.target_categories:
-        category_text = " inside " + ", ".join(category.replace("_", " ") for category in intent.target_categories)
+        category_text = " in " + ", ".join(category.replace("_", " ") for category in intent.target_categories)
     return (
-        f"Ranked {len(items)} items for {name}{category_text}{scenario_text} by combining persona memory, "
-        f"context signals, local candidate retrieval, LLM-assisted re-ranking, and diversity. "
-        f"Top pick: {top.title}, because {top.reason}"
+        f"I found {len(items)} suitable options for {name}{category_text}{scenario_text}. "
+        f"The leading recommendation is {top.title}, because {top.reason}"
     )
+
+
+def _clean_visible_text(text: str) -> str:
+    replacements = {
+        "LLM": "assistant",
+        "AI model": "assistant",
+        "AI": "assistant",
+        "model": "assistant",
+        "reranker": "recommendation process",
+        "re-ranker": "recommendation process",
+        "retrieval": "selection",
+        "candidate": "option",
+        "metadata": "details",
+        "catalog": "collection",
+        "pipeline": "process",
+        "trace": "notes",
+        "algorithm": "method",
+        "score": "fit",
+        "signal": "preference",
+    }
+    cleaned = " ".join(text.split())
+    for word, replacement in replacements.items():
+        cleaned = re.sub(rf"\b{re.escape(word)}\b", replacement, cleaned, flags=re.IGNORECASE)
+    return cleaned

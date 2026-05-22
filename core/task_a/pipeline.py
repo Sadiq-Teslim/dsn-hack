@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import re
+
 from app.config import Settings
 from app.schemas import EvidenceItem, ProductDetails, UserPersona
 from app.services.scoring import predict_rating
 from app.services.text_utils import clamp, keyword_set, stable_round
-from core.orchestration import Pipeline, Step, new_trace
+from core.orchestration import CoreLLMClient, Pipeline, Step, new_trace
 from core.retrieval import retrieve_review_examples
 from core.schemas import AgentRuntimeContext, TaskAAgentResult
 from core.task_a.consistency_checker import check_review_consistency
@@ -38,6 +40,7 @@ async def run_task_a_pipeline(
             CalibrateRatingStep(),
             GenerateReviewStep(settings),
             ConsistencyCheckStep(),
+            FormalizeReviewReasoningStep(settings),
         ],
     )
     context = await pipeline.run(context)
@@ -180,6 +183,94 @@ class ConsistencyCheckStep(Step):
             "consistency_check": check,
         }
         return context
+
+
+class FormalizeReviewReasoningStep(Step):
+    def __init__(self, settings: Settings):
+        super().__init__()
+        self.settings = settings
+
+    async def run(self, context: AgentRuntimeContext) -> AgentRuntimeContext:
+        product = ProductDetails.model_validate(context.product)
+        fallback = _formal_review_note(
+            context.persona.name,
+            product.title,
+            context.working["calibration"].calibrated_rating,
+            context.working["review_text"],
+            context.working["consistency_check"],
+        )
+        llm = CoreLLMClient(self.settings)
+        parsed, meta = await llm.json_chat(
+            [
+                {
+                    "role": "system",
+                    "content": (
+                        "Write a formal, concise user-facing explanation for a generated review result. "
+                        "Return strict JSON only: {\"reasoning\":\"formal explanation\"}. "
+                        "Do not mention technical terms such as LLM, AI, model, calibration, sentiment, "
+                        "retrieval, metadata, catalog, pipeline, trace, algorithm, score, or signal. "
+                        "Do not discuss internal methods."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"Persona: {context.persona.name}, {context.persona.location}, "
+                        f"budget {context.persona.budget_level}, tone {context.persona.tone}, "
+                        f"likes {context.persona.likes}, dislikes {context.persona.dislikes}.\n"
+                        f"Product: {product.title}, {product.category}, {product.description}\n"
+                        f"Rating: {context.working['calibration'].calibrated_rating}/5\n"
+                        f"Generated review: {context.working['review_text']}\n"
+                        f"Consistency note: {context.working['consistency_check']}\n"
+                        f"Draft explanation: {fallback}"
+                    ),
+                },
+            ],
+            temperature=0.18,
+            attempts=3,
+        )
+        reasoning = fallback
+        if parsed:
+            candidate = str(parsed.get("reasoning", "")).strip()
+            if len(candidate) > 20:
+                reasoning = _clean_review_visible_text(candidate)
+        context.working["reasoning"] = reasoning
+        context.working["fallback_used"] = bool(context.working.get("fallback_used")) or bool(meta.get("fallback_used"))
+        context.working["_last_step_outputs"] = {
+            "_summary": "Prepared formal visible explanation for the review result.",
+            "presentation_fallback_used": bool(meta.get("fallback_used")),
+            "presentation_llm_configured": meta.get("configured", False),
+        }
+        return context
+
+
+def _formal_review_note(name: str, product_title: str, rating: float, review_text: str, consistency_check: str) -> str:
+    return (
+        f"The generated review presents how {name} is likely to respond to {product_title}. "
+        f"The {rating:.1f}/5 rating is supported by the review's tone and the stated product fit."
+    )
+
+
+def _clean_review_visible_text(text: str) -> str:
+    replacements = {
+        "LLM": "assistant",
+        "AI model": "assistant",
+        "model": "assistant",
+        "calibration": "rating adjustment",
+        "sentiment": "tone",
+        "retrieval": "reference selection",
+        "metadata": "details",
+        "catalog": "collection",
+        "pipeline": "process",
+        "trace": "notes",
+        "algorithm": "method",
+        "score": "fit",
+        "signal": "preference",
+    }
+    cleaned = " ".join(text.split())
+    for word, replacement in replacements.items():
+        cleaned = re.sub(rf"\b{re.escape(word)}\b", replacement, cleaned, flags=re.IGNORECASE)
+    return cleaned
 
 
 def _catalog_item(catalog: list[dict], product: ProductDetails) -> dict | None:

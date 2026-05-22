@@ -28,7 +28,10 @@ async def llm_rerank_candidates(
                 "Schema: {\"ranked\":[{\"title\":\"candidate title\", \"llm_score\":0.0, "
                 "\"reason\":\"specific reason grounded in persona and context\"}]}. "
                 "Use only candidate titles provided. Score 0-1. Reasons must be natural and specific. "
-                "Do not cite generic query words such as 'based', 'recommend', 'food', or 'item' as preferences."
+                "Write in a formal advisory tone for the user. Do not cite generic query words such as "
+                "'based', 'recommend', 'food', or 'item' as preferences. Do not mention technical terms "
+                "such as LLM, model, reranker, retrieval, candidate, score, signal, metadata, catalog, "
+                "pipeline, trace, or algorithm."
             ),
         },
         {
@@ -131,10 +134,10 @@ def _fallback_reason(profile: UserProfile, intent: IntentSignal, candidate: Cand
 def _readable_matches(matches: list[str]) -> str:
     clean = [match.replace("_", " ") for match in matches if match not in {"catalog", "quality"}]
     if not clean:
-        return "The match is driven more by catalog quality than exact keyword overlap."
+        return "It is a reasonable choice based on its overall product strength."
     if len(clean) == 1:
-        return f"It also matches the preference signal '{clean[0]}'."
-    return f"It also matches preference signals like {', '.join(clean[:3])}."
+        return f"It also reflects the stated preference for {clean[0]}."
+    return f"It also reflects stated preferences such as {', '.join(clean[:3])}."
 
 
 def _budget_note(profile: UserProfile, candidate: CandidateItem) -> str:
@@ -173,13 +176,13 @@ def _context_note(intent: IntentSignal, candidate: CandidateItem) -> str:
         return "It is a secondary fit for the weekend context; "
     if "buy" in constraints and "Books" == candidate.category:
         return "It directly answers the book-buying request; "
-    return "It is ranked because the item evidence lines up with the current request; "
+    return "It is recommended because the item details line up with the current request; "
 
 
 def _quality_note(candidate: CandidateItem) -> str:
     rating = candidate.metadata.get("average_rating")
     try:
-        rating_text = f"with a {float(rating):.1f}/5 catalog signal, "
+        rating_text = f"with a strong {float(rating):.1f}/5 user rating, "
     except (TypeError, ValueError):
         rating_text = ""
     return rating_text

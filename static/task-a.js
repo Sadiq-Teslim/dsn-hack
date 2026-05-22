@@ -44,22 +44,8 @@ function renderPersona(selected) {
 
 function renderReview(result) {
   const evidence = result.evidence
-    .map((item) => `<span class="tag">${escapeHtml(item.source || "evidence")} &middot; ${escapeHtml(item.title)} &middot; ${escapeHtml(item.rating)}/5</span>`)
+    .map((item) => `<span class="tag">${escapeHtml(evidenceLabel(item.source))} &middot; ${escapeHtml(item.title)} &middot; ${escapeHtml(item.rating)}/5</span>`)
     .join("");
-  const calibration = result.calibration
-    ? `
-      <div class="grid gap-3 sm:grid-cols-2">
-        <div class="metric-tile">
-          <p class="text-xs font-black uppercase text-slate-400">Raw sentiment</p>
-          <p class="mt-1 text-2xl font-black text-slate-950">${escapeHtml(result.calibration.sentiment)}</p>
-        </div>
-        <div class="metric-tile">
-          <p class="text-xs font-black uppercase text-slate-400">Calibrated stars</p>
-          <p class="mt-1 text-2xl font-black text-slate-950">${escapeHtml(result.calibration.calibrated_rating)}/5</p>
-        </div>
-      </div>
-    `
-    : "";
   $("review-result").innerHTML = `
     <div class="flex flex-col gap-6">
       <div class="flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
@@ -77,13 +63,11 @@ function renderReview(result) {
         <p class="mt-3 text-xl font-semibold leading-9 text-slate-800">${escapeHtml(result.review_text)}</p>
       </div>
       <div class="rounded-3xl bg-slate-50 p-5">
-        <p class="text-sm font-black uppercase text-slate-500">Behavioral reasoning</p>
+        <p class="text-sm font-black uppercase text-slate-500">Review explanation</p>
         <p class="mt-2 leading-7 text-slate-700">${escapeHtml(result.reasoning)}</p>
-        ${result.consistency_check ? `<p class="mt-3 text-sm font-bold text-slate-500">${escapeHtml(result.consistency_check)}</p>` : ""}
       </div>
-      ${calibration}
       <div>
-        <p class="mb-3 text-sm font-black uppercase text-slate-500">Retrieved evidence</p>
+        <p class="mb-3 text-sm font-black uppercase text-slate-500">Reference examples</p>
         <div class="flex flex-wrap gap-2">${evidence}</div>
       </div>
       ${renderReasoningTrace(result.reasoning_trace)}
@@ -94,10 +78,16 @@ function renderReview(result) {
   $("yarn-result").innerHTML = "Ready. Choose a voice style and click Yarn It.";
 }
 
+function evidenceLabel(source) {
+  if (source === "own_history") return "Past review";
+  if (source === "similar_user") return "Similar shopper";
+  return "Reference";
+}
+
 async function generateReview() {
   $("review-result").innerHTML = `
     <div class="loading flex h-full min-h-[360px] items-center justify-center rounded-[22px] bg-white p-8">
-      <p class="text-lg font-black text-slate-500">Modeling persona behavior...</p>
+      <p class="text-lg font-black text-slate-500">Preparing the review...</p>
     </div>
   `;
   const result = await api("/api/v1/generate-review", {

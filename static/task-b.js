@@ -41,7 +41,7 @@ function resetConversation() {
       html: `
         <p class="message-label">Recommendation agent</p>
         <h2 class="mt-2 text-2xl font-black text-slate-950">What should I help you choose?</h2>
-        <p class="mt-3 leading-7 text-slate-600">Ask naturally. I can handle books, groceries, movies, games, beauty picks, cold-start questions, and cross-domain requests.</p>
+        <p class="mt-3 leading-7 text-slate-600">Ask naturally. I can help with books, groceries, movies, games, beauty picks, new preferences, and requests that connect different interests.</p>
       `,
     },
   ];
@@ -122,8 +122,8 @@ function renderClarificationMessage(result) {
     .map((question) => `<li>${escapeHtml(question)}</li>`)
     .join("");
   return `
-    <p class="text-sm font-black uppercase text-slate-400">Cold-start bootstrap</p>
-    <h2 class="mt-2 text-2xl font-black text-slate-950">I need two quick answers before ranking.</h2>
+    <p class="text-sm font-black uppercase text-slate-400">Preference check</p>
+    <h2 class="mt-2 text-2xl font-black text-slate-950">I need two quick answers before recommending.</h2>
     <p class="mt-3 leading-7 text-slate-600">Reply in the message box. I will keep this session and use your answer in the next turn.</p>
     <ul class="mt-5 space-y-3 text-slate-700">${questions}</ul>
     <div class="agent-trace-bottom">${collapsedTrace(result.reasoning_trace)}</div>
@@ -134,9 +134,9 @@ function renderRecommendationsMessage(result) {
   const rows = (result.items || [])
     .map((item, index) => {
       const matches = (item.matched_preferences || [])
-        .map((match) => `<span class="tag">${escapeHtml(match)}</span>`)
+        .map((match) => `<span class="tag">${escapeHtml(preferenceLabel(match))}</span>`)
         .join("");
-      const score = Number(item.score || 0).toFixed(3);
+      const fitPercent = `${Math.round(Number(item.score || 0) * 100)}%`;
       return `
         <div class="recommendation-row chat-recommendation-row" style="--stagger: ${index}">
           <div class="rank-badge">${escapeHtml(item.rank)}</div>
@@ -144,18 +144,18 @@ function renderRecommendationsMessage(result) {
             <h3 class="text-xl font-black text-slate-950">${escapeHtml(item.title)}</h3>
             <p class="mt-1 text-sm font-bold text-slate-500">${escapeHtml(item.category.replaceAll("_", " "))} &middot; $${escapeHtml(item.price ?? "n/a")}</p>
             <p class="mt-3 leading-7 text-slate-700">${escapeHtml(item.reason)}</p>
-            <div class="mt-3 flex flex-wrap gap-2">${matches || '<span class="tag">cold-start quality</span>'}</div>
+            <div class="mt-3 flex flex-wrap gap-2">${matches || '<span class="tag">recommended fit</span>'}</div>
           </div>
           <div class="score rounded-2xl bg-slate-50 px-4 py-3 text-right">
-            <p class="text-xs font-black uppercase text-slate-400">Score</p>
-            <p class="text-2xl font-black">${escapeHtml(score)}</p>
+            <p class="text-xs font-black uppercase text-slate-400">Fit</p>
+            <p class="text-2xl font-black">${escapeHtml(fitPercent)}</p>
           </div>
         </div>
       `;
     })
     .join("");
 
-  latestRankingText = `${result.reasoning || "Personalized ranking ready."} Top picks: ${(result.items || [])
+  latestRankingText = `${result.reasoning || "Personalized recommendations ready."} Top picks: ${(result.items || [])
     .slice(0, 5)
     .map((item) => `${item.rank}. ${item.title}: ${item.reason}`)
     .join(" ")}`;
@@ -163,11 +163,18 @@ function renderRecommendationsMessage(result) {
   $("yarn-result").innerHTML = "Ready. Choose a voice style and click Yarn It.";
 
   return `
-    <p class="message-label text-emerald-700">Ranked response</p>
-    <p class="mt-2 leading-7 text-slate-700">${escapeHtml(result.reasoning || "I ranked the best matching candidates for this turn.")}</p>
-    <div class="mt-5">${rows || '<p class="text-slate-600">No candidates were returned. Try a broader request.</p>'}</div>
+    <p class="message-label text-emerald-700">Recommendation</p>
+    <p class="mt-2 leading-7 text-slate-700">${escapeHtml(result.reasoning || "I prepared the best matching options for this request.")}</p>
+    <div class="mt-5">${rows || '<p class="text-slate-600">I could not find matching options. Try a broader request.</p>'}</div>
     <div class="agent-trace-bottom">${collapsedTrace(result.reasoning_trace)}</div>
   `;
+}
+
+function preferenceLabel(value) {
+  const normalized = String(value || "").replaceAll("_", " ").trim().toLowerCase();
+  if (!normalized || normalized === "catalog" || normalized === "quality") return "overall fit";
+  if (normalized === "local relevance") return "local relevance";
+  return normalized;
 }
 
 function renderErrorMessage(error) {
@@ -236,7 +243,7 @@ async function generateYarn() {
       user_persona: state.activePersona.persona,
       source_text: latestRankingText,
       mode: $("yarn-mode").value,
-      task: "recommendation ranking",
+      task: "recommendation",
     }),
   });
   latestYarnText = payload.voice_script;
