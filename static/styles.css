@@ -1571,11 +1571,61 @@ div {
   font-weight: 950;
 }
 
+.chat-yarn-body {
+  margin-top: 16px;
+}
+
+.chat-yarn-header {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.chat-yarn-header h2 {
+  margin-top: 4px;
+  color: #020617;
+  font-size: 20px;
+  font-weight: 950;
+  line-height: 1.2;
+}
+
 .yarn-controls {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr) auto auto;
   gap: 10px;
   align-items: end;
+}
+
+.chat-yarn-drawer .yarn-controls {
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.chat-yarn-drawer .field-label {
+  margin-bottom: 6px;
+}
+
+.chat-yarn-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.chat-yarn-actions .button-primary,
+.chat-yarn-actions .button-secondary {
+  width: 100%;
+  min-height: 42px;
+  border-radius: 16px;
+  padding: 0 14px;
+  font-size: 14px;
+}
+
+.chat-yarn-drawer #yarn-result {
+  border-radius: 20px;
+  padding: 16px;
+  font-size: 15px;
+  line-height: 1.45;
 }
 
 #yarn-audio {

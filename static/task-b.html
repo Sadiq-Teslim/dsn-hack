@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Task B | Recommendations</title>
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="/static/styles.css?v=5" />
+    <link rel="stylesheet" href="/static/styles.css?v=6" />
   </head>
   <body>
     <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/85 backdrop-blur-xl">
@@ -51,8 +51,8 @@
 
           <details id="yarn-card" class="yarn-panel chat-yarn-drawer">
             <summary>Voice / YarnGPT</summary>
-            <div class="mt-5">
-              <div class="flex items-center gap-3">
+            <div class="chat-yarn-body">
+              <div class="chat-yarn-header">
                 <span class="voice-bars" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
                 <div>
                   <p class="text-sm font-black uppercase text-slate-500">Yarn Mode</p>
@@ -91,8 +91,10 @@
                     <option>Adam</option>
                   </select>
                 </label>
-                <button id="generate-yarn" class="button-secondary" type="button" disabled>Yarn It</button>
-                <button id="speak-yarn" class="button-primary" type="button" disabled>Generate Audio</button>
+                <div class="chat-yarn-actions">
+                  <button id="generate-yarn" class="button-secondary" type="button" disabled>Yarn It</button>
+                  <button id="speak-yarn" class="button-primary" type="button" disabled>Generate Audio</button>
+                </div>
               </div>
               <audio id="yarn-audio" class="mt-4" controls hidden></audio>
               <div id="yarn-result" class="mt-5 rounded-3xl bg-white p-5 text-slate-700">
