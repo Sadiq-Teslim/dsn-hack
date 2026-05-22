@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Task B | Recommendations</title>
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="/static/styles.css?v=2" />
+    <link rel="stylesheet" href="/static/styles.css?v=3" />
   </head>
   <body>
     <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/85 backdrop-blur-xl">
@@ -39,7 +39,7 @@
             product quality, and cross-domain cold-start signals.
           </p>
         </div>
-        <button id="generate-recommendations" class="button-primary">Recommend</button>
+        <a href="#recommend-context" class="button-primary">Start Chat</a>
       </section>
 
       <section class="workspace-grid">
@@ -52,14 +52,17 @@
         </aside>
 
         <section class="grid gap-5">
-          <div class="panel p-5">
+          <div class="panel p-5 chat-composer-panel">
             <label class="block">
-              <span class="field-label">Recommendation context</span>
-              <textarea id="recommend-context" rows="4" class="textarea">I want useful options for this week that fit my budget and routine.</textarea>
+              <span class="field-label">Chat message</span>
+              <textarea id="recommend-context" rows="3" class="textarea">I want useful options for this week that fit my budget and routine.</textarea>
             </label>
-            <div class="voice-input-row">
+            <div class="chat-composer-actions">
               <span id="context-voice-status" class="voice-status">Voice input loading...</span>
-              <button id="speak-context" class="button-secondary" type="button">Speak Context</button>
+              <div class="chat-composer-buttons">
+                <button id="speak-context" class="button-secondary" type="button">Speak</button>
+                <button id="generate-recommendations" class="button-primary" type="button">Send</button>
+              </div>
             </div>
             <div class="mt-4 flex flex-wrap gap-2">
               <button class="tag" data-context="I need affordable things for a busy school week.">Student week</button>
@@ -67,6 +70,19 @@
               <button class="tag" data-context="I am shopping for family-friendly home use and guests this weekend.">Family weekend</button>
             </div>
           </div>
+
+          <article id="recommend-result" class="panel result-box p-6">
+            <div class="chat-thread">
+              <div class="chat-message agent">
+                <div class="chat-avatar">A</div>
+                <div class="chat-bubble">
+                  <p class="text-sm font-black uppercase text-slate-400">Recommendation agent</p>
+                  <h2 class="mt-2 text-2xl font-black text-slate-950">Tell me what you need and I will reason before ranking.</h2>
+                  <p class="mt-3 leading-7 text-slate-600">Try a cold-start prompt, a cross-domain request, or a constraint like budget, family use, mood, or location.</p>
+                </div>
+              </div>
+            </div>
+          </article>
 
           <article id="yarn-card" class="yarn-panel">
             <div class="flex items-center gap-3">
@@ -117,20 +133,11 @@
             </div>
           </article>
 
-          <article id="recommend-result" class="panel result-box p-6">
-            <div class="flex h-full min-h-[360px] items-center justify-center rounded-[22px] bg-slate-50 p-8 text-center">
-              <div>
-                <p class="text-sm font-black uppercase text-slate-400">Waiting for input</p>
-                <h2 class="mt-3 text-3xl font-black">Generate recommendations to inspect the ranked list.</h2>
-                <p class="mx-auto mt-3 max-w-md text-slate-600">The result will show top items, scores, preference matches, and a concise personalized explanation.</p>
-              </div>
-            </div>
-          </article>
         </section>
       </section>
     </main>
 
-    <script src="/static/shared.js?v=2"></script>
-    <script src="/static/task-b.js?v=2"></script>
+    <script src="/static/shared.js?v=3"></script>
+    <script src="/static/task-b.js?v=3"></script>
   </body>
 </html>

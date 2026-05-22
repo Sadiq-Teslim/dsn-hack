@@ -27,7 +27,7 @@ def test_task_b_app_serves_recommendation_workspace_only() -> None:
 
     page = task_b_client.get("/")
     assert page.status_code == 200
-    assert "Recommendation context" in page.text
-    assert "Recommend" in page.text
+    assert "Chat message" in page.text
+    assert "Recommendation agent" in page.text
 
     assert task_b_client.post("/api/v1/generate-review", json={}).status_code == 404

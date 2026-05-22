@@ -16,37 +16,109 @@ const {
 let latestRankingText = "";
 let latestYarnText = "";
 let activeSessionId = null;
+let conversation = [];
+let messageId = 0;
+
+function nextMessageId() {
+  messageId += 1;
+  return `message-${messageId}`;
+}
 
 function renderPersona(selected) {
   $("persona-card").innerHTML = personaSummary(selected.persona);
   activeSessionId = null;
+  resetConversation();
 }
 
-function renderClarification(result) {
-  const questions = (result.follow_up_questions || [])
-    .map((question) => `<li>${escapeHtml(question)}</li>`)
-    .join("");
+function resetConversation() {
+  latestRankingText = "";
+  latestYarnText = "";
+  conversation = [
+    {
+      id: nextMessageId(),
+      role: "agent",
+      html: `
+        <p class="text-sm font-black uppercase text-slate-400">Recommendation agent</p>
+        <h2 class="mt-2 text-2xl font-black text-slate-950">Tell me what you need and I will reason before ranking.</h2>
+        <p class="mt-3 leading-7 text-slate-600">Try a cold-start prompt, a cross-domain request, or a constraint like budget, family use, mood, or location.</p>
+      `,
+    },
+  ];
+  $("generate-yarn").disabled = true;
+  $("speak-yarn").disabled = true;
+  $("yarn-audio").hidden = true;
+  $("yarn-result").innerHTML = "Generate recommendations first.";
+  renderConversation();
+}
+
+function renderConversation() {
+  const visibleMessages = conversation.slice(-6);
   $("recommend-result").innerHTML = `
-    <div class="rounded-3xl bg-white p-6">
-      <p class="text-sm font-black uppercase text-slate-400">Cold-start bootstrap</p>
-      <h2 class="mt-2 text-3xl font-black text-slate-950">The agent needs two quick answers.</h2>
-      <p class="mt-3 leading-7 text-slate-600">Reply in the context box, then click Recommend again. The same session will carry your answer into the next turn.</p>
-      <ul class="mt-5 space-y-3 text-slate-700">${questions}</ul>
-      ${renderReasoningTrace(result.reasoning_trace)}
+    <div class="chat-thread">
+      ${visibleMessages.map(renderChatMessage).join("")}
+    </div>
+  `;
+  $("recommend-result").scrollTop = $("recommend-result").scrollHeight;
+}
+
+function renderChatMessage(message) {
+  const avatar = message.role === "user" ? "U" : "A";
+  return `
+    <div class="chat-message ${message.role}">
+      <div class="chat-avatar">${avatar}</div>
+      <div class="chat-bubble">${message.html}</div>
     </div>
   `;
 }
 
-function renderRecommendations(result) {
-  if (result.status === "needs_clarification") {
-    renderClarification(result);
-    return;
+function addMessage(role, html) {
+  const message = { id: nextMessageId(), role, html };
+  conversation.push(message);
+  renderConversation();
+  return message.id;
+}
+
+function replaceMessage(id, html) {
+  const target = conversation.find((message) => message.id === id);
+  if (target) {
+    target.html = html;
   }
-  const rows = result.items
+  renderConversation();
+}
+
+function progressMessage() {
+  return `
+    <div class="agent-progress">
+      <p class="text-sm font-black uppercase text-slate-400">Agent workflow running</p>
+      <div class="mt-4 progress-steps">
+        <span>Parsing intent</span>
+        <span>Retrieving candidates</span>
+        <span>Reranking with reasoning</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderClarificationMessage(result) {
+  const questions = (result.follow_up_questions || [])
+    .map((question) => `<li>${escapeHtml(question)}</li>`)
+    .join("");
+  return `
+    <p class="text-sm font-black uppercase text-slate-400">Cold-start bootstrap</p>
+    <h2 class="mt-2 text-2xl font-black text-slate-950">I need two quick answers before ranking.</h2>
+    <p class="mt-3 leading-7 text-slate-600">Reply in the message box. I will keep this session and use your answer in the next turn.</p>
+    <ul class="mt-5 space-y-3 text-slate-700">${questions}</ul>
+    ${renderReasoningTrace(result.reasoning_trace)}
+  `;
+}
+
+function renderRecommendationsMessage(result) {
+  const rows = (result.items || [])
     .map((item) => {
       const matches = (item.matched_preferences || [])
         .map((match) => `<span class="tag">${escapeHtml(match)}</span>`)
         .join("");
+      const score = Number(item.score || 0).toFixed(3);
       return `
         <div class="recommendation-row">
           <div class="rank-badge">${escapeHtml(item.rank)}</div>
@@ -58,46 +130,72 @@ function renderRecommendations(result) {
           </div>
           <div class="score rounded-2xl bg-slate-50 px-4 py-3 text-right">
             <p class="text-xs font-black uppercase text-slate-400">Score</p>
-            <p class="text-2xl font-black">${escapeHtml(item.score.toFixed(3))}</p>
+            <p class="text-2xl font-black">${escapeHtml(score)}</p>
           </div>
         </div>
       `;
     })
     .join("");
-  $("recommend-result").innerHTML = `
-    <div class="mb-6 rounded-3xl bg-emerald-50 p-5">
-      <p class="text-sm font-black uppercase text-emerald-700">Ranking explanation</p>
-      <p class="mt-2 leading-7 text-emerald-950">${escapeHtml(result.reasoning)}</p>
-    </div>
-    <div>${rows}</div>
-    ${renderReasoningTrace(result.reasoning_trace)}
-  `;
-  latestRankingText = `${result.reasoning} Top picks: ${result.items
+
+  latestRankingText = `${result.reasoning || "Personalized ranking ready."} Top picks: ${(result.items || [])
     .slice(0, 5)
     .map((item) => `${item.rank}. ${item.title}: ${item.reason}`)
     .join(" ")}`;
   $("generate-yarn").disabled = false;
   $("yarn-result").innerHTML = "Ready. Choose a voice style and click Yarn It.";
+
+  return `
+    <p class="text-sm font-black uppercase text-emerald-700">Ranked response</p>
+    <p class="mt-2 leading-7 text-emerald-950">${escapeHtml(result.reasoning || "I ranked the best matching candidates for this turn.")}</p>
+    <div class="mt-5">${rows || '<p class="text-slate-600">No candidates were returned. Try a broader request.</p>'}</div>
+    ${renderReasoningTrace(result.reasoning_trace)}
+  `;
+}
+
+function renderErrorMessage(error) {
+  return `
+    <p class="text-sm font-black uppercase text-red-700">Request failed</p>
+    <p class="mt-3 leading-7 text-slate-700">${escapeHtml(error.message)}</p>
+  `;
 }
 
 async function generateRecommendations() {
-  $("recommend-result").innerHTML = `
-    <div class="loading flex h-full min-h-[360px] items-center justify-center rounded-[22px] bg-white p-8">
-      <p class="text-lg font-black text-slate-500">Ranking personalized candidates...</p>
-    </div>
-  `;
-  const result = await api("/api/v1/recommend", {
-    method: "POST",
-    body: JSON.stringify({
-      user_persona: state.activePersona.persona,
-      context: $("recommend-context").value,
-      top_k: 10,
-      session_id: activeSessionId,
-      conversational: true,
-    }),
-  });
-  activeSessionId = result.session_id || activeSessionId;
-  renderRecommendations(result);
+  const input = $("recommend-context");
+  const text = input.value.trim();
+  if (!text) {
+    input.focus();
+    return;
+  }
+
+  addMessage("user", `<p class="leading-7 text-slate-800">${escapeHtml(text)}</p>`);
+  input.value = "";
+  const loadingId = addMessage("agent", progressMessage());
+  $("generate-recommendations").disabled = true;
+
+  try {
+    const result = await api("/api/v1/recommend", {
+      method: "POST",
+      body: JSON.stringify({
+        user_persona: state.activePersona.persona,
+        context: text,
+        top_k: 10,
+        session_id: activeSessionId,
+        conversational: true,
+      }),
+    });
+    activeSessionId = result.session_id || activeSessionId;
+    replaceMessage(
+      loadingId,
+      result.status === "needs_clarification"
+        ? renderClarificationMessage(result)
+        : renderRecommendationsMessage(result),
+    );
+  } catch (error) {
+    replaceMessage(loadingId, renderErrorMessage(error));
+  } finally {
+    $("generate-recommendations").disabled = false;
+    input.focus();
+  }
 }
 
 async function generateYarn() {
@@ -124,12 +222,19 @@ async function init() {
   document.querySelectorAll("[data-context]").forEach((button) => {
     button.addEventListener("click", () => {
       $("recommend-context").value = button.dataset.context;
+      $("recommend-context").focus();
     });
   });
   createVoiceInput({
     button: $("speak-context"),
     target: $("recommend-context"),
     status: $("context-voice-status"),
+  });
+  $("recommend-context").addEventListener("keydown", (event) => {
+    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+      event.preventDefault();
+      generateRecommendations();
+    }
   });
   $("generate-recommendations").addEventListener("click", generateRecommendations);
   $("generate-yarn").addEventListener("click", generateYarn);
