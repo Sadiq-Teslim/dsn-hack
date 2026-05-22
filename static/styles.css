@@ -639,6 +639,8 @@ div {
 .chat-message {
   display: flex;
   padding: 18px 0;
+  scroll-margin-top: 96px;
+  scroll-margin-bottom: 190px;
 }
 
 .chat-message.user {

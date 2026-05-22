@@ -57,10 +57,21 @@ function renderConversation() {
       ${conversation.map(renderChatMessage).join("")}
     </div>
   `;
+  scrollToLatestMessage();
+}
+
+function scrollToLatestMessage() {
   window.requestAnimationFrame(() => {
     const messages = $("recommend-result").querySelectorAll(".chat-message");
     const lastMessage = messages[messages.length - 1];
-    lastMessage?.scrollIntoView({ block: "end", behavior: "smooth" });
+    if (!lastMessage) return;
+    const composerHeight = document.querySelector(".chat-composer-panel")?.offsetHeight || 160;
+    const targetTop = lastMessage.getBoundingClientRect().top + window.scrollY - 96;
+    const maxTop = document.documentElement.scrollHeight - window.innerHeight;
+    window.scrollTo({
+      top: Math.min(targetTop, Math.max(0, maxTop - composerHeight + 42)),
+      behavior: "smooth",
+    });
   });
 }
 
