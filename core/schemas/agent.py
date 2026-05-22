@@ -82,6 +82,8 @@ class IntentSignal(BaseModel):
     target_categories: list[str] = Field(default_factory=list)
     unsupported_targets: list[str] = Field(default_factory=list)
     constraints: list[str] = Field(default_factory=list)
+    max_price: float | None = None
+    max_price_exclusive: bool = False
     taste_descriptors: list[str] = Field(default_factory=list)
     is_cross_domain: bool = False
     is_cold_start: bool = False

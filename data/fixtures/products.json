@@ -165,6 +165,50 @@
     "attributes": {"format": "paperback", "keywords": ["nigerian", "finance", "budget", "lifestyle"]}
   },
   {
+    "item_id": "book-009",
+    "title": "We Should All Be Feminists",
+    "category": "Books",
+    "description": "A short Nigerian essay on gender, society, confidence, and everyday fairness.",
+    "brand": "Fourth Estate",
+    "price": 7.5,
+    "average_rating": 4.6,
+    "rating_number": 1900,
+    "attributes": {"format": "short paperback", "keywords": ["nigerian", "short", "society", "student", "budget"]}
+  },
+  {
+    "item_id": "book-010",
+    "title": "Animal Farm",
+    "category": "Books",
+    "description": "A compact political satire that is easy to finish and useful for discussion.",
+    "brand": "Signet Classics",
+    "price": 8.0,
+    "average_rating": 4.5,
+    "rating_number": 2800,
+    "attributes": {"format": "mass market paperback", "keywords": ["short", "classic", "politics", "school", "budget"]}
+  },
+  {
+    "item_id": "book-011",
+    "title": "The Little Prince",
+    "category": "Books",
+    "description": "A brief reflective story about friendship, imagination, responsibility, and growing up.",
+    "brand": "Mariner",
+    "price": 6.5,
+    "average_rating": 4.7,
+    "rating_number": 3500,
+    "attributes": {"format": "paperback", "keywords": ["short", "reflective", "friendship", "family", "budget"]}
+  },
+  {
+    "item_id": "book-012",
+    "title": "The Richest Man in Babylon",
+    "category": "Books",
+    "description": "A short personal finance classic with simple lessons on saving, discipline, and money habits.",
+    "brand": "Plume",
+    "price": 9.0,
+    "average_rating": 4.4,
+    "rating_number": 2200,
+    "attributes": {"format": "paperback", "keywords": ["finance", "budget", "money", "discipline", "practical"]}
+  },
+  {
     "item_id": "grocery-004",
     "title": "Indomie Chicken Noodles Value Pack",
     "category": "Grocery_and_Gourmet_Food",

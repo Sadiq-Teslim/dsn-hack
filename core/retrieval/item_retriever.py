@@ -71,6 +71,8 @@ def _score_products(
     for product in products:
         if target_categories and product.get("category") not in target_categories:
             continue
+        if not _within_price_limit(product.get("price"), intent):
+            continue
         tokens = keyword_set(
             product.get("title", ""),
             product.get("category", ""),
@@ -130,6 +132,20 @@ def _score_products(
     return candidates
 
 
+def _within_price_limit(price: object, intent: IntentSignal) -> bool:
+    if intent.max_price is None:
+        return True
+    if price is None:
+        return False
+    try:
+        price_float = float(price)
+    except (TypeError, ValueError):
+        return False
+    if intent.max_price_exclusive:
+        return price_float < intent.max_price
+    return price_float <= intent.max_price
+
+
 def _budget_penalty(profile: UserProfile, price: object) -> float:
     if price is None:
         return 0.0
@@ -146,8 +162,8 @@ def _budget_penalty(profile: UserProfile, price: object) -> float:
 
 
 def _local_reason(product: dict[str, Any], matches: list[str], context_match: float) -> str:
-    matched = ", ".join(matches) or "cold-start quality"
+    matched = ", ".join(matches) or "overall quality"
     return (
-        f"Local shortlist fit: {product.get('average_rating', 3.8):.1f}/5 catalog signal, "
-        f"context match {context_match:.2f}, matched {matched}."
+        f"Strong user rating of {product.get('average_rating', 3.8):.1f}/5, "
+        f"with useful details for {matched}."
     )

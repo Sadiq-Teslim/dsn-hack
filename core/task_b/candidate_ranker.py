@@ -16,7 +16,7 @@ async def llm_rerank_candidates(
     shortlist = candidates[:limit]
     llm = CoreLLMClient(settings)
     candidate_lines = "\n".join(
-        f"{idx+1}. {item.title} | {item.category} | local={item.local_score:.3f} | "
+        f"{idx+1}. {item.title} | {item.category} | fit={item.local_score:.3f} | "
         f"matches={', '.join(item.matched_preferences) or 'none'} | {item.reason}"
         for idx, item in enumerate(shortlist)
     )
@@ -29,9 +29,11 @@ async def llm_rerank_candidates(
                 "\"reason\":\"specific reason grounded in persona and context\"}]}. "
                 "Use only candidate titles provided. Score 0-1. Reasons must be natural and specific. "
                 "Write in a formal advisory tone for the user. Do not cite generic query words such as "
-                "'based', 'recommend', 'food', or 'item' as preferences. Do not mention technical terms "
+                "'based', 'recommend', 'food', or 'item' as preferences. Only claim a preference match "
+                "when it appears in the item details or supplied matches; otherwise describe the option "
+                "as a category, price, or general-quality fit. Do not mention technical terms "
                 "such as LLM, model, reranker, retrieval, candidate, score, signal, metadata, catalog, "
-                "pipeline, trace, or algorithm."
+                "pipeline, trace, algorithm, shortlist, or context match."
             ),
         },
         {
@@ -42,6 +44,8 @@ async def llm_rerank_candidates(
                 f"dislikes {profile.persona.dislikes}, taste tokens {profile.taste_tokens[:12]}.\n"
                 f"Context: {intent.raw_context or 'No explicit context'}\n"
                 f"Intent descriptors: {intent.taste_descriptors}\n"
+                f"Maximum price: {intent.max_price if intent.max_price is not None else 'none'}"
+                f"{' exclusive' if intent.max_price_exclusive else ''}\n"
                 f"Candidates:\n{candidate_lines}\n"
                 "Re-rank these candidates with reasoning. Output JSON only."
             ),

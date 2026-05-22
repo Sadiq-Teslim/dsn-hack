@@ -122,6 +122,26 @@ def test_book_query_returns_books_instead_of_movies() -> None:
     assert "Wedding Party" not in {item["title"] for item in payload["items"]}
 
 
+def test_book_query_respects_explicit_price_ceiling() -> None:
+    persona = client.get("/api/v1/demo-personas").json()[0]["persona"]
+    response = client.post(
+        "/api/v1/recommend",
+        json={
+            "user_persona": persona,
+            "context": "I want books below $10 only.",
+            "top_k": 8,
+            "conversational": True,
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["items"]
+    assert {item["category"] for item in payload["items"]} == {"Books"}
+    assert all(item["price"] < 10 for item in payload["items"])
+    shortlist = next(step for step in payload["reasoning_trace"]["steps"] if step["name"] == "CandidateShortlistStep")
+    assert shortlist["outputs"]["max_price"] == 10.0
+
+
 def test_weekly_utility_query_prioritizes_practical_categories() -> None:
     persona = client.get("/api/v1/demo-personas").json()[0]["persona"]
     response = client.post(

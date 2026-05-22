@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from app.services.text_utils import tokenize
 from core.schemas import IntentSignal, UserProfile
 
@@ -38,6 +40,7 @@ CATEGORY_ALIASES = {
 def parse_intent(context: str, profile: UserProfile, include_categories: list[str]) -> IntentSignal:
     token_list = tokenize(context)
     tokens = set(token_list)
+    max_price, max_price_exclusive = _extract_max_price(context)
     categories = list(include_categories)
     mentioned = [
         (index, CATEGORY_ALIASES[token])
@@ -79,6 +82,8 @@ def parse_intent(context: str, profile: UserProfile, include_categories: list[st
         ]
         if token in tokens
     ]
+    if max_price is not None and "price_limit" not in constraints:
+        constraints.append("price_limit")
     source_categories = set(profile.category_affinity)
     mentioned_categories = {category for _, category in mentioned}
     source_mentions = mentioned_categories - set(categories)
@@ -103,12 +108,30 @@ def parse_intent(context: str, profile: UserProfile, include_categories: list[st
         target_categories=categories,
         unsupported_targets=[],
         constraints=constraints,
+        max_price=max_price,
+        max_price_exclusive=max_price_exclusive,
         taste_descriptors=descriptors,
         is_cross_domain=is_cross_domain,
         is_cold_start=is_cold_start,
         needs_clarification=needs_clarification,
         clarification_questions=questions,
     )
+
+
+def _extract_max_price(context: str) -> tuple[float | None, bool]:
+    text = context.lower().replace(",", "")
+    patterns = [
+        (r"\b(?:below|under|less\s+than)\s*\$?\s*(\d+(?:\.\d+)?)\b", True),
+        (r"\b(?:at\s+most|not\s+more\s+than|no\s+more\s+than|maximum|max(?:imum)?\s+of|up\s+to)\s*\$?\s*(\d+(?:\.\d+)?)\b", False),
+        (r"\$?\s*(\d+(?:\.\d+)?)\s*(?:or\s+less|and\s+below|and\s+under)\b", False),
+        (r"(?:<=|≤)\s*\$?\s*(\d+(?:\.\d+)?)\b", False),
+        (r"<\s*\$?\s*(\d+(?:\.\d+)?)\b", True),
+    ]
+    for pattern, exclusive in patterns:
+        match = re.search(pattern, text)
+        if match:
+            return float(match.group(1)), exclusive
+    return None, False
 
 
 def _first_index(tokens: list[str], words: set[str]) -> int | None:

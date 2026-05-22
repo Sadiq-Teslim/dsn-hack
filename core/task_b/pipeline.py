@@ -107,6 +107,8 @@ class ParseIntentStep(Step):
             "_summary": "Parsed recommendation intent, constraints, and scenario type.",
             "target_categories": intent.target_categories,
             "constraints": intent.constraints,
+            "max_price": intent.max_price,
+            "max_price_exclusive": intent.max_price_exclusive,
             "is_cold_start": intent.is_cold_start,
             "is_cross_domain": intent.is_cross_domain,
             "needs_clarification": intent.needs_clarification,
@@ -181,6 +183,7 @@ class CandidateShortlistStep(Step):
             "candidate_count": len(candidates),
             "top_candidates": [item.title for item in candidates[:5]],
             "unsupported_targets": unsupported,
+            "max_price": intent.max_price,
         }
         return context
 
@@ -276,13 +279,10 @@ async def _formalize_visible_response(
 ) -> tuple[list[RecommendedItem], str, bool, dict]:
     fallback_summary = _summary(name, intent, items)
     llm = CoreLLMClient(settings)
-    if not items:
-        return items, fallback_summary, not llm.configured, {"configured": llm.configured}
-
     item_lines = "\n".join(
         f"{item.rank}. {item.title} | {item.category.replace('_', ' ')} | price={item.price} | reason={item.reason}"
         for item in items
-    )
+    ) or "No available options matched all stated requirements."
     parsed, meta = await llm.json_chat(
         [
             {
@@ -291,9 +291,12 @@ async def _formalize_visible_response(
                     "You write polished recommendation copy for an end user. Return strict JSON only. "
                     "Schema: {\"summary\":\"formal summary\", \"items\":[{\"title\":\"exact title\", "
                     "\"reason\":\"formal user-facing reason\"}]}. Use only the supplied item titles. "
+                    "If no options are supplied, return an empty items array and explain the unmet requirement clearly. "
+                    "Do not invent preference matches. Only mention a preference when it is supported by the supplied item reason, "
+                    "item category, item title, or price. "
                     "Use a formal, concise, helpful tone. Do not mention technical terms such as LLM, AI, "
                     "model, reranker, retrieval, candidate, score, signal, metadata, catalog, pipeline, "
-                    "trace, algorithm, or system. Do not discuss internal methods. Do not over-explain."
+                    "trace, algorithm, system, shortlist, or context match. Do not discuss internal methods. Do not over-explain."
                 ),
             },
             {
@@ -319,6 +322,9 @@ async def _formalize_visible_response(
     if not summary or not isinstance(rewritten, list):
         return items, fallback_summary, True, meta
 
+    if not items:
+        return items, _clean_visible_text(summary), bool(meta.get("fallback_used")), meta
+
     by_title = {item.title: item for item in items}
     for row in rewritten:
         if not isinstance(row, dict):
@@ -332,6 +338,7 @@ async def _formalize_visible_response(
 
 def _summary(name: str, intent, items: list[RecommendedItem]) -> str:
     if not items:
+        price_note = _price_note(intent)
         if intent.unsupported_targets:
             available = "Grocery, Movies and TV, Video Games, Beauty, and Books"
             targets = ", ".join(category.replace("_", " ") for category in intent.unsupported_targets)
@@ -339,6 +346,9 @@ def _summary(name: str, intent, items: list[RecommendedItem]) -> str:
                 f"I could not prepare {targets} recommendations because that category is not available in this demo collection. "
                 f"Available demo categories are {available}."
             )
+        if intent.target_categories and intent.max_price is not None:
+            targets = ", ".join(category.replace("_", " ") for category in intent.target_categories)
+            return f"I could not find {targets} options {price_note}. Please raise the price limit or choose another available category."
         return "I could not find a suitable match for the current request. Please try a broader request or choose another available category."
     top = items[0]
     scenario = []
@@ -352,10 +362,18 @@ def _summary(name: str, intent, items: list[RecommendedItem]) -> str:
     category_text = ""
     if intent.target_categories:
         category_text = " in " + ", ".join(category.replace("_", " ") for category in intent.target_categories)
+    price_text = f" {_price_note(intent)}" if intent.max_price is not None else ""
     return (
-        f"I found {len(items)} suitable options for {name}{category_text}{scenario_text}. "
+        f"I found {len(items)} suitable options for {name}{category_text}{price_text}{scenario_text}. "
         f"The leading recommendation is {top.title}, because {top.reason}"
     )
+
+
+def _price_note(intent) -> str:
+    if intent.max_price is None:
+        return ""
+    comparator = "below" if intent.max_price_exclusive else "at or below"
+    return f"{comparator} ${intent.max_price:g}"
 
 
 def _clean_visible_text(text: str) -> str:
@@ -375,6 +393,8 @@ def _clean_visible_text(text: str) -> str:
         "algorithm": "method",
         "score": "fit",
         "signal": "preference",
+        "shortlist": "selection",
+        "context match": "request fit",
     }
     cleaned = " ".join(text.split())
     for word, replacement in replacements.items():
