@@ -610,6 +610,13 @@ div {
   overflow-wrap: anywhere;
 }
 
+.trace-note {
+  color: #475569;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.55;
+}
+
 .tag {
   display: inline-flex;
   align-items: center;

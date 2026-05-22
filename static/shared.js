@@ -346,24 +346,17 @@ function renderReasoningTrace(trace) {
   }
   const rows = steps
     .map((step, index) => {
-      const outputs = Object.entries(step.outputs || {})
-        .filter(([key]) => key !== "_summary")
-        .slice(0, 5)
-        .map(([key, value]) => {
-          const rendered = formatTraceValue(value);
-          return `<span class="trace-chip">${escapeHtml(key.replaceAll("_", " "))}: ${escapeHtml(rendered)}</span>`;
-        })
+      const notes = humanTraceNotes(step)
+        .map((note) => `<p class="trace-note">${escapeHtml(note)}</p>`)
         .join("");
       return `
         <div class="trace-step">
           <div class="trace-index">${index + 1}</div>
           <div>
             <div class="flex flex-wrap items-center gap-2">
-              <p class="font-black text-slate-950">${escapeHtml(step.name.replaceAll("_", " "))}</p>
-              <span class="text-xs font-bold text-slate-400">${escapeHtml(Math.round(step.latency_ms || 0))}ms</span>
+              <p class="font-black text-slate-950">${escapeHtml(traceStepTitle(step.name))}</p>
             </div>
-            <p class="mt-1 text-sm leading-7 text-slate-600">${escapeHtml(step.summary)}</p>
-            <div class="mt-3 flex flex-wrap gap-2">${outputs}</div>
+            <div class="mt-2 grid gap-1.5">${notes}</div>
           </div>
         </div>
       `;
@@ -375,6 +368,171 @@ function renderReasoningTrace(trace) {
       <div class="mt-4">${rows}</div>
     </details>
   `;
+}
+
+function traceStepTitle(name) {
+  const titles = {
+    ResolveUserProfileStep: "User preference review",
+    RetrieveEvidenceStep: "Reference review selection",
+    PredictSentimentStep: "Likely reaction estimate",
+    CalibrateRatingStep: "Rating choice",
+    GenerateReviewStep: "Review writing",
+    ConsistencyCheckStep: "Final review check",
+    FormalizeReviewReasoningStep: "Explanation polish",
+    ParseIntentStep: "Request understanding",
+    CrossDomainBridgeStep: "Interest connection",
+    ColdStartGateStep: "Readiness check",
+    CandidateShortlistStep: "Option filtering",
+    LLMRerankStep: "Best option selection",
+    DiversityStep: "List balance",
+    BuildRecommendationResponseStep: "Final response",
+  };
+  return titles[name] || name.replaceAll("_", " ").replace(/Step$/, "");
+}
+
+function humanTraceNotes(step) {
+  const outputs = step.outputs || {};
+  const name = step.name;
+  const notes = [];
+
+  if (name === "ResolveUserProfileStep") {
+    notes.push("It reviewed the selected persona and the user's past preferences.");
+    if (outputs.nigerian_register) notes.push(`It kept the user's preferred communication style as ${outputs.nigerian_register}.`);
+    if (outputs.top_taste_tokens?.length || outputs.taste_tokens?.length) {
+      notes.push(`It noted interests such as ${friendlyList(outputs.top_taste_tokens || outputs.taste_tokens, 4)}.`);
+    }
+    return notes;
+  }
+
+  if (name === "RetrieveEvidenceStep") {
+    notes.push(`It selected ${plural(outputs.evidence_count, "reference review")} to guide the generated review.`);
+    if (outputs.top_evidence?.length) notes.push(`The most relevant references included ${friendlyList(outputs.top_evidence, 3)}.`);
+    return notes;
+  }
+
+  if (name === "PredictSentimentStep") {
+    notes.push(`It estimated that the user would have a ${reactionLabel(outputs.sentiment)} reaction to the product.`);
+    if (outputs.base_reasoning) notes.push(cleanTraceSentence(outputs.base_reasoning));
+    return notes;
+  }
+
+  if (name === "CalibrateRatingStep") {
+    notes.push(`It chose a ${outputs.calibrated_rating}/5 rating after comparing the product fit with the user's usual rating style.`);
+    return notes;
+  }
+
+  if (name === "GenerateReviewStep") {
+    notes.push("It wrote the review in the user's likely tone.");
+    if (outputs.fallback_used === false) notes.push("It used the hosted language service for the final wording.");
+    if (outputs.fallback_used === true) notes.push("It used the local backup writer for this result.");
+    return notes;
+  }
+
+  if (name === "ConsistencyCheckStep") {
+    notes.push(cleanTraceSentence(outputs.consistency_check || "It checked that the review and rating agree."));
+    return notes;
+  }
+
+  if (name === "FormalizeReviewReasoningStep" || name === "BuildRecommendationResponseStep") {
+    notes.push("It rewrote the visible explanation so it reads clearly for a person reviewing the result.");
+    if (outputs.presentation_llm_configured === true) notes.push("It used the hosted language service for the final explanation.");
+    if (outputs.presentation_fallback_used === true) notes.push("It used a local backup explanation because the hosted service was unavailable.");
+    return notes;
+  }
+
+  if (name === "ParseIntentStep") {
+    if (outputs.target_categories?.length) notes.push(`It understood the requested area as ${friendlyCategories(outputs.target_categories)}.`);
+    if (outputs.excluded_categories?.length) notes.push(`It treated ${friendlyCategories(outputs.excluded_categories)} as excluded from the result.`);
+    if (outputs.max_price) notes.push(`It treated ${pricePhrase(outputs)} as a firm price rule.`);
+    if (outputs.constraints?.length) notes.push(`It also noticed conditions such as ${friendlyList(outputs.constraints, 5)}.`);
+    if (!notes.length) notes.push("It read the message and identified what kind of recommendation was needed.");
+    return notes;
+  }
+
+  if (name === "CrossDomainBridgeStep") {
+    if (outputs.is_cross_domain) notes.push("It connected the user's interests from one area to another before recommending.");
+    if (outputs.taste_descriptors?.length) notes.push(`It used preference ideas such as ${friendlyList(outputs.taste_descriptors, 5)}.`);
+    if (!notes.length) notes.push("It checked whether the request needed ideas to be connected across categories.");
+    return notes;
+  }
+
+  if (name === "ColdStartGateStep") {
+    if (outputs.follow_up_questions?.length) {
+      notes.push("It decided that more information was needed before making a recommendation.");
+      notes.push(`It asked: ${friendlyList(outputs.follow_up_questions, 2)}.`);
+    } else {
+      notes.push("It had enough information to continue with the recommendation.");
+    }
+    return notes;
+  }
+
+  if (name === "CandidateShortlistStep") {
+    notes.push(`It found ${plural(outputs.candidate_count, "possible option")} after applying the request rules.`);
+    if (outputs.top_candidates?.length) notes.push(`The first options considered were ${friendlyList(outputs.top_candidates, 4)}.`);
+    if (outputs.excluded_categories?.length) notes.push(`It removed options from ${friendlyCategories(outputs.excluded_categories)}.`);
+    return notes;
+  }
+
+  if (name === "LLMRerankStep") {
+    notes.push("It compared the remaining options and placed the strongest matches first.");
+    if (outputs.top_reranked?.length) notes.push(`The leading choices after comparison were ${friendlyList(outputs.top_reranked, 4)}.`);
+    if (outputs.fallback_used === true) notes.push("It used the local backup comparison for this step.");
+    return notes;
+  }
+
+  if (name === "DiversityStep") {
+    notes.push("It checked the list so the final result was not too repetitive.");
+    if (outputs.selected_categories?.length) notes.push(`The final mix included ${friendlyCategories(outputs.selected_categories)}.`);
+    return notes;
+  }
+
+  return [cleanTraceSentence(step.summary || "This step was completed.")];
+}
+
+function friendlyCategories(categories) {
+  return friendlyList(
+    [...new Set(categories || [])].map((category) => String(category).replaceAll("_", " and ")),
+    5,
+  );
+}
+
+function friendlyList(items, limit = 4) {
+  const clean = (items || [])
+    .filter((item) => item !== null && item !== undefined && String(item).trim())
+    .map((item) => String(item).replaceAll("_", " ").trim())
+    .slice(0, limit);
+  if (!clean.length) return "none";
+  if (clean.length === 1) return clean[0];
+  return `${clean.slice(0, -1).join(", ")} and ${clean[clean.length - 1]}`;
+}
+
+function plural(count, label) {
+  const number = Number(count || 0);
+  return `${number} ${label}${number === 1 ? "" : "s"}`;
+}
+
+function reactionLabel(sentiment) {
+  const value = Number(sentiment);
+  if (Number.isNaN(value)) return "balanced";
+  if (value >= 0.75) return "strongly positive";
+  if (value >= 0.58) return "positive";
+  if (value >= 0.42) return "mixed";
+  return "critical";
+}
+
+function pricePhrase(outputs) {
+  const limit = Number(outputs.max_price);
+  const amount = Number.isInteger(limit) ? `$${limit}` : `$${limit.toFixed(2)}`;
+  return outputs.max_price_exclusive ? `below ${amount}` : `at or below ${amount}`;
+}
+
+function cleanTraceSentence(text) {
+  const value = String(text || "")
+    .replace(/^passed:\s*/i, "It confirmed that ")
+    .replace(/^warning:\s*/i, "It noted that ")
+    .replaceAll("_", " ")
+    .trim();
+  return value ? value[0].toUpperCase() + value.slice(1) : "It completed this check.";
 }
 
 function formatTraceValue(value) {
