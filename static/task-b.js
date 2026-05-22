@@ -154,9 +154,6 @@ function renderRecommendationsMessage(result) {
           </div>
           <p class="rec-reason">${escapeHtml(item.reason)}</p>
           <div class="rec-tags">${matches || '<span class="tag">recommended fit</span>'}</div>
-          <div class="fit-meter" aria-hidden="true">
-            <span style="width: ${escapeHtml(fitPercent)}"></span>
-          </div>
         </div>
       `;
     })
