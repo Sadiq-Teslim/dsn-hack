@@ -45,6 +45,15 @@ def test_generate_review_uses_fallback_without_groq_key() -> None:
     assert payload["review_text"]
     assert payload["fallback_used"] is True
     assert payload["evidence"]
+    assert [step["name"] for step in payload["reasoning_trace"]["steps"]] == [
+        "ResolveUserProfileStep",
+        "RetrieveEvidenceStep",
+        "PredictSentimentStep",
+        "CalibrateRatingStep",
+        "GenerateReviewStep",
+        "ConsistencyCheckStep",
+    ]
+    assert payload["calibration"]["calibrated_rating"] == payload["rating"]
 
 
 def test_recommend_returns_ranked_items() -> None:
@@ -62,6 +71,8 @@ def test_recommend_returns_ranked_items() -> None:
     assert len(payload["items"]) == 5
     assert [item["rank"] for item in payload["items"]] == [1, 2, 3, 4, 5]
     assert payload["items"][0]["score"] >= payload["items"][-1]["score"]
+    assert "LLMRerankStep" in [step["name"] for step in payload["reasoning_trace"]["steps"]]
+    assert payload["session_id"]
 
 
 def test_fixture_evaluation_metrics() -> None:

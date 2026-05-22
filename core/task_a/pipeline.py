@@ -1,0 +1,212 @@
+from __future__ import annotations
+
+from app.config import Settings
+from app.schemas import EvidenceItem, ProductDetails, UserPersona
+from app.services.text_utils import clamp, keyword_set, stable_round
+from core.orchestration import Pipeline, Step, new_trace
+from core.retrieval import retrieve_review_examples
+from core.schemas import AgentRuntimeContext, TaskAAgentResult
+from core.task_a.consistency_checker import check_review_consistency
+from core.task_a.rating_calibration import calibrate_rating
+from core.task_a.review_generator import generate_grounded_review
+from core.user_model import build_user_profile
+
+
+async def run_task_a_pipeline(
+    settings: Settings,
+    persona: UserPersona,
+    product: ProductDetails,
+    catalog: list[dict],
+    reviews: list[dict],
+) -> TaskAAgentResult:
+    trace = new_trace("task_a_review_simulation")
+    context = AgentRuntimeContext(
+        request_id=trace.request_id,
+        persona=persona,
+        product=product.model_dump(),
+        catalog=catalog,
+        reviews=reviews,
+        trace=trace,
+    )
+    pipeline = Pipeline(
+        "task_a_review_simulation",
+        [
+            ResolveUserProfileStep(),
+            RetrieveEvidenceStep(),
+            PredictSentimentStep(),
+            CalibrateRatingStep(),
+            GenerateReviewStep(settings),
+            ConsistencyCheckStep(),
+        ],
+    )
+    context = await pipeline.run(context)
+    evidence = [EvidenceItem.model_validate(item) for item in context.working["evidence"]]
+    calibration = context.working["calibration"]
+    return TaskAAgentResult(
+        rating=calibration.calibrated_rating,
+        review_text=context.working["review_text"],
+        confidence=context.working["confidence"],
+        reasoning=context.working["reasoning"],
+        evidence=evidence,
+        calibration=calibration,
+        reasoning_trace=context.trace,
+        llm_provider=settings.llm_provider,
+        fallback_used=bool(context.working.get("fallback_used")),
+        consistency_check=context.working["consistency_check"],
+    )
+
+
+class ResolveUserProfileStep(Step):
+    async def run(self, context: AgentRuntimeContext) -> AgentRuntimeContext:
+        profile = build_user_profile(context.persona)
+        context.user_profile = profile
+        context.working["_last_step_outputs"] = {
+            "_summary": "Built structured user profile with rating distribution and taste fingerprint.",
+            "rating_mean": profile.rating_mean,
+            "rating_std": profile.rating_std,
+            "cold_start": profile.cold_start,
+            "top_taste_tokens": profile.taste_tokens[:8],
+            "nigerian_register": profile.nigerian_register.value,
+        }
+        return context
+
+
+class RetrieveEvidenceStep(Step):
+    async def run(self, context: AgentRuntimeContext) -> AgentRuntimeContext:
+        product = ProductDetails.model_validate(context.product)
+        evidence = retrieve_review_examples(
+            context.persona,
+            context.user_profile,
+            product,
+            context.reviews,
+            limit=5,
+        )
+        context.working["evidence"] = [item.model_dump() for item in evidence]
+        context.working["_last_step_outputs"] = {
+            "_summary": "Retrieved own-history and similar-review exemplars for grounded generation.",
+            "evidence_count": len(evidence),
+            "top_evidence": [item.title for item in evidence[:3]],
+        }
+        return context
+
+
+class PredictSentimentStep(Step):
+    async def run(self, context: AgentRuntimeContext) -> AgentRuntimeContext:
+        product = ProductDetails.model_validate(context.product)
+        profile = context.user_profile
+        catalog_item = _catalog_item(context.catalog, product)
+        target_tokens = keyword_set(product.title, product.category, product.description, product.attributes)
+        preference_overlap = len(target_tokens & set(profile.taste_tokens)) / max(1, len(target_tokens))
+        dislike_overlap = len(target_tokens & keyword_set(profile.persona.dislikes)) / max(1, len(target_tokens))
+        catalog_rating = float((catalog_item or {}).get("average_rating", 3.8))
+        category_affinity = profile.category_affinity.get(product.category, profile.rating_mean)
+        budget = _budget_adjustment(profile.persona.budget_level, product.price or (catalog_item or {}).get("price"))
+        sentiment = (
+            0.38 * (catalog_rating / 5)
+            + 0.28 * (category_affinity / 5)
+            + 0.22 * preference_overlap
+            - 0.18 * dislike_overlap
+            + budget
+            + 0.12
+        )
+        sentiment = stable_round(clamp(sentiment, 0.05, 0.98))
+        context.working["sentiment"] = sentiment
+        context.working["catalog_rating"] = catalog_rating
+        context.working["confidence"] = stable_round(
+            clamp(0.50 + 0.05 * profile.history_count + preference_overlap * 0.25, 0.45, 0.94)
+        )
+        context.working["_last_step_outputs"] = {
+            "_summary": "Predicted raw sentiment before converting it to a user-calibrated star rating.",
+            "sentiment": sentiment,
+            "catalog_rating": catalog_rating,
+            "preference_overlap": stable_round(preference_overlap),
+            "dislike_overlap": stable_round(dislike_overlap),
+        }
+        return context
+
+
+class CalibrateRatingStep(Step):
+    async def run(self, context: AgentRuntimeContext) -> AgentRuntimeContext:
+        calibration = calibrate_rating(
+            context.user_profile,
+            context.working["sentiment"],
+            context.working["catalog_rating"],
+        )
+        context.working["calibration"] = calibration
+        context.working["reasoning"] = calibration.explanation
+        context.working["_last_step_outputs"] = {
+            "_summary": "Mapped sentiment to stars using the user's personal rating distribution.",
+            "raw_rating": calibration.raw_rating,
+            "calibrated_rating": calibration.calibrated_rating,
+            "calibration_logic": calibration.explanation,
+        }
+        return context
+
+
+class GenerateReviewStep(Step):
+    def __init__(self, settings: Settings):
+        super().__init__()
+        self.settings = settings
+
+    async def run(self, context: AgentRuntimeContext) -> AgentRuntimeContext:
+        product = ProductDetails.model_validate(context.product)
+        evidence = [EvidenceItem.model_validate(item) for item in context.working["evidence"]]
+        review_text, fallback_used, meta = await generate_grounded_review(
+            self.settings,
+            context.user_profile,
+            product,
+            context.working["calibration"].calibrated_rating,
+            evidence,
+        )
+        context.working["review_text"] = review_text
+        context.working["fallback_used"] = fallback_used
+        context.working["_last_step_outputs"] = {
+            "_summary": "Generated review from calibrated score, retrieved examples, and Nigerian register exemplars.",
+            "fallback_used": fallback_used,
+            "llm_configured": meta.get("configured", False),
+            "review_preview": review_text[:140],
+        }
+        return context
+
+
+class ConsistencyCheckStep(Step):
+    async def run(self, context: AgentRuntimeContext) -> AgentRuntimeContext:
+        check = check_review_consistency(
+            context.working["review_text"],
+            context.working["calibration"].calibrated_rating,
+        )
+        context.working["consistency_check"] = check
+        context.working["_last_step_outputs"] = {
+            "_summary": "Checked whether review sentiment and calibrated rating are aligned.",
+            "consistency_check": check,
+        }
+        return context
+
+
+def _catalog_item(catalog: list[dict], product: ProductDetails) -> dict | None:
+    return next(
+        (
+            item
+            for item in catalog
+            if item.get("title", "").lower() == product.title.lower()
+            or item.get("category") == product.category
+        ),
+        None,
+    )
+
+
+def _budget_adjustment(budget_level: str, price: object) -> float:
+    if price is None:
+        return 0.0
+    try:
+        price_float = float(price)
+    except (TypeError, ValueError):
+        return 0.0
+    budget = budget_level.lower()
+    if budget == "low" and price_float > 30:
+        return -0.08
+    if budget == "medium" and price_float > 80:
+        return -0.04
+    if budget == "high" and price_float > 40:
+        return 0.03
+    return 0.0

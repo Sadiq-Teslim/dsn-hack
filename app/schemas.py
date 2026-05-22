@@ -54,6 +54,9 @@ class GenerateReviewResponse(BaseModel):
     evidence: list[EvidenceItem]
     llm_provider: str
     fallback_used: bool
+    reasoning_trace: dict[str, Any] | None = None
+    calibration: dict[str, Any] | None = None
+    consistency_check: str | None = None
 
 
 class RecommendRequest(BaseModel):
@@ -61,6 +64,8 @@ class RecommendRequest(BaseModel):
     context: str = ""
     top_k: int = Field(default=10, ge=1, le=20)
     include_categories: list[str] = Field(default_factory=list)
+    session_id: str | None = None
+    conversational: bool = False
 
 
 class RecommendedItem(BaseModel):
@@ -79,6 +84,10 @@ class RecommendResponse(BaseModel):
     reasoning: str
     llm_provider: str
     fallback_used: bool
+    reasoning_trace: dict[str, Any] | None = None
+    session_id: str | None = None
+    status: str = "complete"
+    follow_up_questions: list[str] = Field(default_factory=list)
 
 
 class YarnRequest(BaseModel):

@@ -14,7 +14,6 @@ from app.schemas import (
     HealthResponse,
     RecommendRequest,
     RecommendResponse,
-    RecommendedItem,
     YarnRequest,
     YarnResponse,
     YarnTTSRequest,
@@ -22,9 +21,10 @@ from app.schemas import (
 )
 from app.services.data_store import DataStore, get_data_store
 from app.services.evaluation import fixture_metrics
-from app.services.generation import generate_recommendation_summary, generate_review_text, generate_yarn_text
-from app.services.scoring import predict_rating, rank_products, retrieve_evidence
+from app.services.generation import generate_yarn_text
 from app.services.yarngpt_client import YarnGPTClient
+from core.task_a import run_task_a_pipeline
+from core.task_b import run_task_b_pipeline
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "static"
@@ -98,36 +98,24 @@ async def generate_review(
     settings: Settings = Depends(get_settings),
     store: DataStore = Depends(get_data_store),
 ) -> GenerateReviewResponse:
-    catalog_item = next(
-        (
-            item
-            for item in store.products
-            if item["title"].lower() == request.product.title.lower()
-            or item["category"] == request.product.category
-        ),
-        None,
-    )
-    rating, confidence, reasoning = predict_rating(
-        request.user_persona,
-        request.product,
-        catalog_item,
-    )
-    evidence = retrieve_evidence(request.user_persona, request.product)
-    review_text, fallback_used = await generate_review_text(
+    result = await run_task_a_pipeline(
         settings,
         request.user_persona,
         request.product,
-        rating,
-        evidence,
+        store.products,
+        store.reviews,
     )
     return GenerateReviewResponse(
-        rating=rating,
-        review_text=review_text,
-        confidence=confidence,
-        reasoning=reasoning,
-        evidence=evidence,
-        llm_provider=settings.llm_provider,
-        fallback_used=fallback_used,
+        rating=result.rating,
+        review_text=result.review_text,
+        confidence=result.confidence,
+        reasoning=result.reasoning,
+        evidence=result.evidence,
+        llm_provider=result.llm_provider,
+        fallback_used=result.fallback_used,
+        reasoning_trace=result.reasoning_trace.compact(),
+        calibration=result.calibration.model_dump(),
+        consistency_check=result.consistency_check,
     )
 
 
@@ -137,37 +125,25 @@ async def recommend(
     settings: Settings = Depends(get_settings),
     store: DataStore = Depends(get_data_store),
 ) -> RecommendResponse:
-    ranked = rank_products(
+    result = await run_task_b_pipeline(
+        settings,
         request.user_persona,
         store.products,
         request.context,
         request.include_categories,
         request.top_k,
-    )
-    items = [
-        RecommendedItem(
-            rank=index + 1,
-            item_id=item["item_id"],
-            title=item["title"],
-            category=item["category"],
-            score=item["score"],
-            reason=_reason_for_item(item),
-            matched_preferences=item["matched_preferences"],
-            price=item.get("price"),
-        )
-        for index, item in enumerate(ranked)
-    ]
-    summary, fallback_used = await generate_recommendation_summary(
-        settings,
-        request.user_persona,
-        request.context,
-        [item.title for item in items],
+        request.session_id,
+        request.conversational,
     )
     return RecommendResponse(
-        items=items,
-        reasoning=summary,
-        llm_provider=settings.llm_provider,
-        fallback_used=fallback_used,
+        items=result.items,
+        reasoning=result.reasoning,
+        llm_provider=result.llm_provider,
+        fallback_used=result.fallback_used,
+        reasoning_trace=result.reasoning_trace.compact(),
+        session_id=result.session_id,
+        status=result.status.value,
+        follow_up_questions=result.follow_up_questions,
     )
 
 
@@ -209,12 +185,4 @@ async def yarn_tts(
         response_format=request.response_format,
         fallback_used=audio_data_url is None,
         message=message,
-    )
-
-
-def _reason_for_item(item: dict) -> str:
-    matches = ", ".join(item["matched_preferences"]) or "general preference fit"
-    return (
-        f"Score {item['score']:.3f}: strong {item['category'].replace('_', ' ')} fit, "
-        f"{item.get('average_rating', 0):.1f}/5 catalog signal, matched {matches}."
     )

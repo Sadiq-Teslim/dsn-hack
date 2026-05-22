@@ -413,6 +413,58 @@ div {
   padding: 18px;
 }
 
+.trace-panel {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #fff;
+  padding: 16px;
+}
+
+.trace-panel summary {
+  cursor: pointer;
+  color: #020617;
+  font-size: 14px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.trace-step {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  padding: 14px 0;
+}
+
+.trace-step:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.trace-index {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  background: #111827;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.trace-chip {
+  display: inline-flex;
+  max-width: 100%;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #475569;
+  padding: 5px 9px;
+  font-size: 12px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
 .tag {
   display: inline-flex;
   align-items: center;

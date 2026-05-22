@@ -25,11 +25,29 @@ The core idea is simple: users are not static profiles. They are changing storie
 | Aspect | Typical Solution | Team Ace Approach | Advantage |
 |---|---|---|---|
 | Scoring | Opaque LLM calls | Local interpretable ensemble models | Auditable and reproducible |
-| Language generation | LLM does everything | Groq only after local decisions | Controllable and consistent |
+| Language/reasoning | LLM does everything | Groq generates reviews and re-ranks shortlisted candidates with traceable reasoning | Controllable and consistent |
 | User representation | Static embeddings | Dynamic traces plus Nigerian signals | Culturally relevant |
-| Architecture | Monolithic demo | Bounded agentic workflow | Judge-friendly and reliable |
+| Architecture | Monolithic demo | Shared core orchestrator with task-specific apps | Judge-friendly and reliable |
 
-The LLM does not secretly decide the score. Local models first predict ratings and rank items. Groq then turns the validated decision into fluent reviews and explanations. If no API key is available, deterministic fallback text keeps the app runnable.
+The LLM does not secretly run the whole product. Task A predicts sentiment and calibrates ratings locally before Groq writes the final review. Task B retrieves and scores a candidate shortlist locally, then uses Groq to reason over those candidates and re-rank them before diversity filtering. If no API key is available, deterministic fallback text keeps both apps runnable.
+
+## How The New Apps Work
+
+Both deployed apps now share a `core/` agent layer:
+
+```text
+core/schemas/          Pydantic contracts for personas, traces, candidates, and results
+core/orchestration/    Step + Pipeline runner that captures latency and reasoning traces
+core/user_model/       Dynamic user profile builder from persona and history
+core/retrieval/        Review and item shortlist retrieval
+core/localization/     Nigerian register exemplars for grounded local tone
+core/task_a/           Review simulation: retrieval, sentiment, calibration, generation
+core/task_b/           Recommendation: intent parsing, cross-domain bridge, LLM re-ranking
+```
+
+Task A is a structured workspace: judges select or edit a persona, edit product details, and click **Generate Review**. The result shows the predicted rating, generated review, calibration details, retrieved evidence, and an expandable agent reasoning trace.
+
+Task B is closer to chat: judges enter the current need, the app maintains a `session_id`, and cold-start flows can ask follow-up questions before recommending. The final result shows ranked items plus the trace from intent parsing through LLM re-ranking.
 
 ## Key Results
 
@@ -276,10 +294,12 @@ The paper follows the 4 to 8 page requirement and is structured around:
 ## Repository Map
 
 ```text
-app/                  FastAPI app, schemas, services, scoring, LLM clients
+app/                  FastAPI task entrypoints, public schemas, app-level services
+core/                 Shared agent contracts, orchestration, retrieval, and task pipelines
 static/               Landing page, Task A UI, Task B UI, shared frontend logic
 data/fixtures/        Zero-download demo data
 data/amazon_subset/   Checked-in real Amazon Reviews 2023 subset
+data/nigerian_context Curated Nigerian register exemplars
 docs/                 Solution paper, screenshots, evaluation report
 examples/             Example JSON payloads for API testing
 scripts/              Dataset, evaluation, and paper generation scripts

@@ -43,7 +43,7 @@ function personaSummary(persona) {
       <div>
         <p class="text-xs font-black uppercase tracking-wider text-slate-400">Selected persona</p>
         <h2 class="mt-1 text-2xl font-black text-slate-950">${escapeHtml(persona.name)}</h2>
-        <p class="mt-1 text-sm font-semibold text-slate-500">${escapeHtml(persona.occupation)} · ${escapeHtml(persona.location)}</p>
+        <p class="mt-1 text-sm font-semibold text-slate-500">${escapeHtml(persona.occupation)} &middot; ${escapeHtml(persona.location)}</p>
       </div>
       <div class="grid gap-3 text-sm">
         <div class="rounded-2xl bg-slate-50 p-4">
@@ -220,6 +220,59 @@ function renderYarnResult(container, payload) {
   `;
 }
 
+function renderReasoningTrace(trace) {
+  const steps = trace?.steps || [];
+  if (!steps.length) {
+    return "";
+  }
+  const rows = steps
+    .map((step, index) => {
+      const outputs = Object.entries(step.outputs || {})
+        .filter(([key]) => key !== "_summary")
+        .slice(0, 5)
+        .map(([key, value]) => {
+          const rendered = formatTraceValue(value);
+          return `<span class="trace-chip">${escapeHtml(key.replaceAll("_", " "))}: ${escapeHtml(rendered)}</span>`;
+        })
+        .join("");
+      return `
+        <div class="trace-step">
+          <div class="trace-index">${index + 1}</div>
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <p class="font-black text-slate-950">${escapeHtml(step.name.replaceAll("_", " "))}</p>
+              <span class="text-xs font-bold text-slate-400">${escapeHtml(Math.round(step.latency_ms || 0))}ms</span>
+            </div>
+            <p class="mt-1 text-sm leading-7 text-slate-600">${escapeHtml(step.summary)}</p>
+            <div class="mt-3 flex flex-wrap gap-2">${outputs}</div>
+          </div>
+        </div>
+      `;
+    })
+    .join("");
+  return `
+    <details class="trace-panel mt-5" open>
+      <summary>Agent reasoning trace</summary>
+      <div class="mt-4">${rows}</div>
+    </details>
+  `;
+}
+
+function formatTraceValue(value) {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => (typeof item === "object" && item !== null ? JSON.stringify(item) : String(item)))
+      .join(", ");
+  }
+  if (typeof value === "object" && value !== null) {
+    return Object.entries(value)
+      .slice(0, 4)
+      .map(([key, item]) => `${key}: ${item}`)
+      .join(", ");
+  }
+  return String(value ?? "");
+}
+
 window.AgentApp = {
   $,
   api,
@@ -235,4 +288,5 @@ window.AgentApp = {
   generateYarnAudio,
   playYarnAudio,
   renderYarnResult,
+  renderReasoningTrace,
 };

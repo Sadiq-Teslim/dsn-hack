@@ -1,0 +1,86 @@
+[
+  {
+    "id": "pidgin-value-01",
+    "register": "Nigerian Pidgin",
+    "tone": "casual value-focused",
+    "text": "For the price, this one make sense. E no perfect, but e do the work well and I no regret buying am.",
+    "tags": ["budget", "value", "practical"]
+  },
+  {
+    "id": "pidgin-complaint-01",
+    "register": "Nigerian Pidgin",
+    "tone": "direct complaint",
+    "text": "The idea good but the execution no reach. I expected better quality because the price no small.",
+    "tags": ["overpriced", "quality", "complaint"]
+  },
+  {
+    "id": "standard-lagos-01",
+    "register": "Standard Nigerian English",
+    "tone": "casual Lagos practical",
+    "text": "It fits a busy Lagos routine: quick to use, not too stressful, and useful enough to justify the money.",
+    "tags": ["lagos", "routine", "budget"]
+  },
+  {
+    "id": "standard-family-01",
+    "register": "Standard Nigerian English",
+    "tone": "warm family shopper",
+    "text": "I like that it works for the whole house. It is easy to share when visitors come around and still feels like good value.",
+    "tags": ["family", "visitors", "home"]
+  },
+  {
+    "id": "yoruba-light-01",
+    "register": "Yoruba-flavoured English",
+    "tone": "light approving",
+    "text": "For me, this one is actually okay. O da, especially if you want something simple that will not waste your money.",
+    "tags": ["simple", "budget", "approval"]
+  },
+  {
+    "id": "yoruba-light-02",
+    "register": "Yoruba-flavoured English",
+    "tone": "measured caveat",
+    "text": "It is useful, sha, but I would not call it premium. If the price drops a little, it becomes an easier recommendation.",
+    "tags": ["price", "measured", "caveat"]
+  },
+  {
+    "id": "hausa-light-01",
+    "register": "Hausa-flavoured English",
+    "tone": "practical",
+    "text": "Gaskiya, it is a sensible pick if you need something dependable. The main thing is that it does not waste time.",
+    "tags": ["dependable", "practical", "routine"]
+  },
+  {
+    "id": "hausa-light-02",
+    "register": "Hausa-flavoured English",
+    "tone": "polite complaint",
+    "text": "The product is fine, but ba sosai ba. I expected stronger performance for this kind of price.",
+    "tags": ["performance", "price", "complaint"]
+  },
+  {
+    "id": "igbo-light-01",
+    "register": "Igbo-flavoured English",
+    "tone": "warm approval",
+    "text": "This one is useful, honestly. Ọ dị mma for everyday use, especially when you want something that will last.",
+    "tags": ["durable", "everyday", "approval"]
+  },
+  {
+    "id": "igbo-light-02",
+    "register": "Igbo-flavoured English",
+    "tone": "family value",
+    "text": "I like it more because the family can use it. No long story, it gives value and does not feel wasteful.",
+    "tags": ["family", "value", "home"]
+  },
+  {
+    "id": "formal-judge-01",
+    "register": "Formal judge summary",
+    "tone": "formal evaluation",
+    "text": "The output is grounded in user-specific constraints: budget, category preference, prior ratings, and contextual use.",
+    "tags": ["judge", "evaluation", "reasoning"]
+  },
+  {
+    "id": "formal-judge-02",
+    "register": "Formal judge summary",
+    "tone": "formal ablation",
+    "text": "The explanation reflects a behavioral decision made before generation, rather than a generic language-model response.",
+    "tags": ["judge", "agentic", "scoring"]
+  }
+]

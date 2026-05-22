@@ -17,9 +17,9 @@ from app.schemas import (
     YarnTTSResponse,
 )
 from app.services.data_store import DataStore, get_data_store
-from app.services.generation import generate_review_text, generate_yarn_text
-from app.services.scoring import predict_rating, retrieve_evidence
+from app.services.generation import generate_yarn_text
 from app.services.yarngpt_client import YarnGPTClient
+from core.task_a import run_task_a_pipeline
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "static"
@@ -83,36 +83,24 @@ async def generate_review(
     settings: Settings = Depends(get_settings),
     store: DataStore = Depends(get_data_store),
 ) -> GenerateReviewResponse:
-    catalog_item = next(
-        (
-            item
-            for item in store.products
-            if item["title"].lower() == request.product.title.lower()
-            or item["category"] == request.product.category
-        ),
-        None,
-    )
-    rating, confidence, reasoning = predict_rating(
-        request.user_persona,
-        request.product,
-        catalog_item,
-    )
-    evidence = retrieve_evidence(request.user_persona, request.product)
-    review_text, fallback_used = await generate_review_text(
+    result = await run_task_a_pipeline(
         settings,
         request.user_persona,
         request.product,
-        rating,
-        evidence,
+        store.products,
+        store.reviews,
     )
     return GenerateReviewResponse(
-        rating=rating,
-        review_text=review_text,
-        confidence=confidence,
-        reasoning=reasoning,
-        evidence=evidence,
-        llm_provider=settings.llm_provider,
-        fallback_used=fallback_used,
+        rating=result.rating,
+        review_text=result.review_text,
+        confidence=result.confidence,
+        reasoning=result.reasoning,
+        evidence=result.evidence,
+        llm_provider=result.llm_provider,
+        fallback_used=result.fallback_used,
+        reasoning_trace=result.reasoning_trace.compact(),
+        calibration=result.calibration.model_dump(),
+        consistency_check=result.consistency_check,
     )
 
 

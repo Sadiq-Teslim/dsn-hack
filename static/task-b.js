@@ -10,16 +10,38 @@ const {
   createVoiceInput,
   playYarnAudio,
   renderYarnResult,
+  renderReasoningTrace,
 } = window.AgentApp;
 
 let latestRankingText = "";
 let latestYarnText = "";
+let activeSessionId = null;
 
 function renderPersona(selected) {
   $("persona-card").innerHTML = personaSummary(selected.persona);
+  activeSessionId = null;
+}
+
+function renderClarification(result) {
+  const questions = (result.follow_up_questions || [])
+    .map((question) => `<li>${escapeHtml(question)}</li>`)
+    .join("");
+  $("recommend-result").innerHTML = `
+    <div class="rounded-3xl bg-white p-6">
+      <p class="text-sm font-black uppercase text-slate-400">Cold-start bootstrap</p>
+      <h2 class="mt-2 text-3xl font-black text-slate-950">The agent needs two quick answers.</h2>
+      <p class="mt-3 leading-7 text-slate-600">Reply in the context box, then click Recommend again. The same session will carry your answer into the next turn.</p>
+      <ul class="mt-5 space-y-3 text-slate-700">${questions}</ul>
+      ${renderReasoningTrace(result.reasoning_trace)}
+    </div>
+  `;
 }
 
 function renderRecommendations(result) {
+  if (result.status === "needs_clarification") {
+    renderClarification(result);
+    return;
+  }
   const rows = result.items
     .map((item) => {
       const matches = (item.matched_preferences || [])
@@ -30,7 +52,7 @@ function renderRecommendations(result) {
           <div class="rank-badge">${escapeHtml(item.rank)}</div>
           <div>
             <h3 class="text-xl font-black text-slate-950">${escapeHtml(item.title)}</h3>
-            <p class="mt-1 text-sm font-bold text-slate-500">${escapeHtml(item.category.replaceAll("_", " "))} · $${escapeHtml(item.price ?? "n/a")}</p>
+            <p class="mt-1 text-sm font-bold text-slate-500">${escapeHtml(item.category.replaceAll("_", " "))} &middot; $${escapeHtml(item.price ?? "n/a")}</p>
             <p class="mt-3 leading-7 text-slate-700">${escapeHtml(item.reason)}</p>
             <div class="mt-3 flex flex-wrap gap-2">${matches || '<span class="tag">cold-start quality</span>'}</div>
           </div>
@@ -48,6 +70,7 @@ function renderRecommendations(result) {
       <p class="mt-2 leading-7 text-emerald-950">${escapeHtml(result.reasoning)}</p>
     </div>
     <div>${rows}</div>
+    ${renderReasoningTrace(result.reasoning_trace)}
   `;
   latestRankingText = `${result.reasoning} Top picks: ${result.items
     .slice(0, 5)
@@ -69,8 +92,11 @@ async function generateRecommendations() {
       user_persona: state.activePersona.persona,
       context: $("recommend-context").value,
       top_k: 10,
+      session_id: activeSessionId,
+      conversational: true,
     }),
   });
+  activeSessionId = result.session_id || activeSessionId;
   renderRecommendations(result);
 }
 
@@ -116,7 +142,7 @@ async function init() {
     );
     Promise.resolve(played).then((ok) => {
       if (!ok) {
-      $("yarn-result").innerHTML += `<p class="mt-3 text-red-700">This browser does not support speech synthesis.</p>`;
+        $("yarn-result").innerHTML += `<p class="mt-3 text-red-700">This browser does not support speech synthesis.</p>`;
       }
     });
   });
