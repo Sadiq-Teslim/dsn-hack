@@ -734,6 +734,10 @@ div {
   align-items: start;
 }
 
+.task-a-results.is-loading {
+  grid-template-columns: 1fr;
+}
+
 .task-a-review-panel {
   min-height: 0;
   padding: 20px;

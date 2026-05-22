@@ -20,7 +20,8 @@ let latestYarnText = "";
 
 function fillProduct(product) {
   $("product-title").value = product.title;
-  $("product-category").value = product.category;
+  $("product-category").dataset.rawCategory = product.category;
+  $("product-category").value = formatCategory(product.category);
   $("product-price").value = product.price ?? "";
   $("product-brand").value = product.brand ?? "";
   $("product-description").value = product.description;
@@ -28,14 +29,23 @@ function fillProduct(product) {
 
 function currentProduct() {
   const selected = state.products.find((item) => item.title === $("product-select").value);
+  const categoryInput = $("product-category");
+  const rawCategory = categoryInput.dataset.rawCategory;
   return {
     title: $("product-title").value,
-    category: $("product-category").value,
+    category: rawCategory && categoryInput.value === formatCategory(rawCategory) ? rawCategory : categoryInput.value,
     description: $("product-description").value,
     price: Number($("product-price").value || selected?.price || 0),
     brand: $("product-brand").value || selected?.brand || null,
     attributes: selected?.attributes ?? {},
   };
+}
+
+function formatCategory(category) {
+  return String(category || "")
+    .replaceAll("_", " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function renderPersona(selected) {
@@ -96,6 +106,8 @@ function renderReview(result) {
     </div>
   `;
   $("task-a-trace").innerHTML = renderReasoningTrace(result.reasoning_trace).replace(" open>", ">");
+  $("task-a-results").classList.remove("is-loading");
+  $("task-a-side-column").hidden = false;
   latestReviewText = `${result.rating}/5. ${result.review_text} Reasoning: ${result.reasoning}`;
   $("generate-yarn").disabled = false;
   $("yarn-result").innerHTML = "Ready. Choose a voice style and click Yarn It.";
@@ -109,6 +121,8 @@ function evidenceLabel(source) {
 
 async function generateReview() {
   $("task-a-results").hidden = false;
+  $("task-a-results").classList.add("is-loading");
+  $("task-a-side-column").hidden = true;
   $("task-a-trace").innerHTML = "";
   $("generate-yarn").disabled = true;
   $("speak-yarn").disabled = true;
@@ -156,6 +170,9 @@ async function init() {
   fillProduct(products[0]);
   $("product-select").addEventListener("change", (event) => {
     fillProduct(products.find((item) => item.title === event.target.value));
+  });
+  $("product-category").addEventListener("input", () => {
+    delete $("product-category").dataset.rawCategory;
   });
   enhanceSelect($("product-select"));
   enhanceAllSelects();
