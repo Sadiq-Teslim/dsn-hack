@@ -8,13 +8,30 @@ CATEGORY_ALIASES = {
     "skin": "All_Beauty",
     "skincare": "All_Beauty",
     "food": "Grocery_and_Gourmet_Food",
+    "foods": "Grocery_and_Gourmet_Food",
+    "grocery": "Grocery_and_Gourmet_Food",
+    "groceries": "Grocery_and_Gourmet_Food",
+    "meal": "Grocery_and_Gourmet_Food",
+    "meals": "Grocery_and_Gourmet_Food",
+    "breakfast": "Grocery_and_Gourmet_Food",
     "snack": "Grocery_and_Gourmet_Food",
+    "snacks": "Grocery_and_Gourmet_Food",
     "drink": "Grocery_and_Gourmet_Food",
+    "drinks": "Grocery_and_Gourmet_Food",
     "movie": "Movies_and_TV",
+    "movies": "Movies_and_TV",
     "film": "Movies_and_TV",
+    "films": "Movies_and_TV",
     "watch": "Movies_and_TV",
     "game": "Video_Games",
+    "games": "Video_Games",
     "play": "Video_Games",
+    "book": "Books",
+    "books": "Books",
+    "read": "Books",
+    "reading": "Books",
+    "novel": "Books",
+    "novels": "Books",
 }
 
 
@@ -39,9 +56,27 @@ def parse_intent(context: str, profile: UserProfile, include_categories: list[st
     for category in target_mentions:
         if category not in categories:
             categories.append(category)
+    if not categories:
+        for category in _infer_practical_categories(tokens):
+            if category not in categories:
+                categories.append(category)
     constraints = [
         token
-        for token in ["budget", "cheap", "affordable", "family", "weekend", "work", "school", "quick"]
+        for token in [
+            "budget",
+            "cheap",
+            "affordable",
+            "family",
+            "weekend",
+            "work",
+            "school",
+            "quick",
+            "routine",
+            "useful",
+            "week",
+            "daily",
+            "buy",
+        ]
         if token in tokens
     ]
     source_categories = set(profile.category_affinity)
@@ -66,6 +101,7 @@ def parse_intent(context: str, profile: UserProfile, include_categories: list[st
     return IntentSignal(
         raw_context=context,
         target_categories=categories,
+        unsupported_targets=[],
         constraints=constraints,
         taste_descriptors=descriptors,
         is_cross_domain=is_cross_domain,
@@ -93,6 +129,24 @@ def _target_categories_from_mentions(
         if after:
             return list(dict.fromkeys(after))
     return list(dict.fromkeys(category for _, category in mentioned))
+
+
+def _infer_practical_categories(tokens: set[str]) -> list[str]:
+    if tokens & {"book", "books", "read", "reading", "novel", "novels"}:
+        return ["Books"]
+    if tokens & {"food", "meal", "meals", "breakfast", "snack", "snacks", "drink", "drinks", "grocery", "groceries"}:
+        return ["Grocery_and_Gourmet_Food"]
+    if tokens & {"beauty", "skin", "skincare", "sunscreen", "cream", "daily"}:
+        return ["All_Beauty"]
+    if tokens & {"movie", "movies", "film", "films", "watch", "comedy", "drama"}:
+        return ["Movies_and_TV"]
+    if tokens & {"game", "games", "play", "football", "multiplayer"}:
+        return ["Video_Games"]
+    if tokens & {"useful", "routine", "week", "school", "work", "quick", "budget", "affordable", "cheap"}:
+        return ["Grocery_and_Gourmet_Food", "All_Beauty"]
+    if tokens & {"fun", "weekend", "friends", "relax"}:
+        return ["Movies_and_TV", "Video_Games", "Grocery_and_Gourmet_Food"]
+    return []
 
 
 def _taste_descriptors(context: str, profile: UserProfile) -> list[str]:

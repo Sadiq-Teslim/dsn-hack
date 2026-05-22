@@ -108,5 +108,60 @@
     "average_rating": 4.3,
     "rating_number": 760,
     "attributes": {"skin_type": "oily", "keywords": ["sunscreen", "matte", "daily"]}
+  },
+  {
+    "item_id": "book-001",
+    "title": "Born a Crime",
+    "category": "Books",
+    "description": "A witty memoir that blends childhood, identity, humour, and social history.",
+    "brand": "One World",
+    "price": 13.0,
+    "average_rating": 4.8,
+    "rating_number": 2400,
+    "attributes": {"format": "paperback", "keywords": ["memoir", "humour", "identity", "south africa"]}
+  },
+  {
+    "item_id": "book-002",
+    "title": "Things Fall Apart",
+    "category": "Books",
+    "description": "A classic Nigerian novel about culture, family, change, and colonial disruption.",
+    "brand": "Anchor",
+    "price": 10.0,
+    "average_rating": 4.7,
+    "rating_number": 3100,
+    "attributes": {"format": "paperback", "keywords": ["classic", "nigerian", "culture", "family"]}
+  },
+  {
+    "item_id": "book-003",
+    "title": "Purple Hibiscus",
+    "category": "Books",
+    "description": "A coming-of-age Nigerian novel about family pressure, faith, freedom, and voice.",
+    "brand": "Algonquin",
+    "price": 12.0,
+    "average_rating": 4.6,
+    "rating_number": 1850,
+    "attributes": {"format": "paperback", "keywords": ["nigerian", "family", "coming of age", "literary"]}
+  },
+  {
+    "item_id": "book-004",
+    "title": "Atomic Habits",
+    "category": "Books",
+    "description": "A practical guide to building better routines with small repeatable behaviour changes.",
+    "brand": "Avery",
+    "price": 16.0,
+    "average_rating": 4.8,
+    "rating_number": 4200,
+    "attributes": {"format": "paperback", "keywords": ["habits", "routine", "self improvement", "practical"]}
+  },
+  {
+    "item_id": "book-005",
+    "title": "The Smart Money Woman",
+    "category": "Books",
+    "description": "A Nigerian personal finance story focused on money discipline, friendship, and lifestyle choices.",
+    "brand": "Matador",
+    "price": 14.0,
+    "average_rating": 4.5,
+    "rating_number": 980,
+    "attributes": {"format": "paperback", "keywords": ["nigerian", "finance", "budget", "lifestyle"]}
   }
 ]

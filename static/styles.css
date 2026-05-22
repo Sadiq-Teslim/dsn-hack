@@ -503,9 +503,7 @@ div {
 }
 
 .chat-composer-panel {
-  position: sticky;
-  top: 92px;
-  z-index: 2;
+  position: static;
 }
 
 .chat-composer-actions {

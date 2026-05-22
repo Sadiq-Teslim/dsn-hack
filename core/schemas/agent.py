@@ -80,6 +80,7 @@ class RatingCalibration(BaseModel):
 class IntentSignal(BaseModel):
     raw_context: str = ""
     target_categories: list[str] = Field(default_factory=list)
+    unsupported_targets: list[str] = Field(default_factory=list)
     constraints: list[str] = Field(default_factory=list)
     taste_descriptors: list[str] = Field(default_factory=list)
     is_cross_domain: bool = False

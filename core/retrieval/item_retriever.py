@@ -47,23 +47,6 @@ def shortlist_items(
             target_categories,
         )
     )
-    if target_categories and len(candidates) < limit:
-        existing = {item.item_id for item in candidates}
-        candidates.extend(
-            item
-            for item in _score_products(
-                profile,
-                products,
-                intent,
-                context_counter,
-                preference_tokens,
-                dislike_tokens,
-                descriptor_tokens,
-                set(),
-            )
-            if item.item_id not in existing
-        )
-
     if target_categories:
         return sorted(
             candidates,

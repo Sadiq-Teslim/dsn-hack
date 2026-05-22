@@ -157,10 +157,20 @@ class CandidateShortlistStep(Step):
         if context.working.get("status") == AgentDecisionStatus.NEEDS_CLARIFICATION:
             context.working["_last_step_outputs"] = {"_summary": "Skipped shortlist pending clarification."}
             return context
+        intent = context.working["intent"]
+        available_categories = {str(product.get("category", "")) for product in context.catalog}
+        unsupported = [
+            category
+            for category in intent.target_categories
+            if category not in available_categories
+        ]
+        if unsupported:
+            intent.unsupported_targets = unsupported
+            context.working["intent"] = intent
         candidates = shortlist_items(
             context.user_profile,
             context.catalog,
-            context.working["intent"],
+            intent,
             limit=50,
         )
         context.working["candidates"] = candidates
@@ -168,6 +178,7 @@ class CandidateShortlistStep(Step):
             "_summary": "Local retriever filtered catalog to a candidate shortlist before LLM re-ranking.",
             "candidate_count": len(candidates),
             "top_candidates": [item.title for item in candidates[:5]],
+            "unsupported_targets": unsupported,
         }
         return context
 
@@ -248,16 +259,28 @@ class BuildRecommendationResponseStep(Step):
 
 def _summary(name: str, intent, items: list[RecommendedItem]) -> str:
     if not items:
-        return "No items matched the current constraints."
+        if intent.unsupported_targets:
+            available = "Grocery, Movies and TV, Video Games, Beauty, and Books"
+            targets = ", ".join(category.replace("_", " ") for category in intent.unsupported_targets)
+            return (
+                f"I could not rank {targets} because that category is not loaded in this demo catalog. "
+                f"Available demo categories are {available}."
+            )
+        return "No items matched the current constraints. Try a broader request or another available category."
     top = items[0]
     scenario = []
     if intent.is_cold_start:
         scenario.append("cold-start")
     if intent.is_cross_domain:
         scenario.append("cross-domain")
+    if intent.unsupported_targets:
+        scenario.append("partial catalog match")
     scenario_text = f" ({', '.join(scenario)})" if scenario else ""
+    category_text = ""
+    if intent.target_categories:
+        category_text = " inside " + ", ".join(category.replace("_", " ") for category in intent.target_categories)
     return (
-        f"Ranked {len(items)} items for {name}{scenario_text} by combining persona memory, "
+        f"Ranked {len(items)} items for {name}{category_text}{scenario_text} by combining persona memory, "
         f"context signals, local candidate retrieval, LLM-assisted re-ranking, and diversity. "
         f"Top pick: {top.title}, because {top.reason}"
     )

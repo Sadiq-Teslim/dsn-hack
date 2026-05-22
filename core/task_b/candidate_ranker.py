@@ -113,9 +113,73 @@ def _nearest_title_match(title: str, candidates: list[CandidateItem]) -> Candida
 
 
 def _fallback_reason(profile: UserProfile, intent: IntentSignal, candidate: CandidateItem) -> str:
-    matches = ", ".join(candidate.matched_preferences) or "catalog quality"
-    context = f" for '{intent.raw_context}'" if intent.raw_context else ""
-    return (
-        f"Reasoned fit{context}: {candidate.title} matches {profile.persona.name}'s "
-        f"budget level, category signals, and {matches}."
-    )
+    category_name = candidate.category.replace("_", " ")
+    matches = _readable_matches(candidate.matched_preferences)
+    target_note = ""
+    if intent.target_categories:
+        target_note = (
+            f"It stays inside the requested {category_name} lane, "
+            if candidate.category in set(intent.target_categories)
+            else f"It is an adjacent {category_name} option, "
+        )
+    budget_note = _budget_note(profile, candidate)
+    context_note = _context_note(intent, candidate)
+    quality_note = _quality_note(candidate)
+    return f"{target_note}{context_note}{budget_note}{quality_note}{matches}"
+
+
+def _readable_matches(matches: list[str]) -> str:
+    clean = [match.replace("_", " ") for match in matches if match not in {"catalog", "quality"}]
+    if not clean:
+        return "The match is driven more by catalog quality than exact keyword overlap."
+    if len(clean) == 1:
+        return f"It also matches the preference signal '{clean[0]}'."
+    return f"It also matches preference signals like {', '.join(clean[:3])}."
+
+
+def _budget_note(profile: UserProfile, candidate: CandidateItem) -> str:
+    price = candidate.price
+    if price is None:
+        return ""
+    budget = profile.persona.budget_level.lower()
+    if budget == "low":
+        if price <= 15:
+            return f"the price is friendly for {profile.persona.name}'s low-budget profile, "
+        if price <= 30:
+            return f"the price is still manageable for a careful low-budget buyer, "
+        return f"the price is the main caution for a low-budget buyer, "
+    if budget == "medium" and price <= 40:
+        return "the price is reasonable for a medium-budget routine, "
+    return "the price is acceptable for the persona's budget level, "
+
+
+def _context_note(intent: IntentSignal, candidate: CandidateItem) -> str:
+    text = " ".join(
+        [
+            candidate.title,
+            candidate.category,
+            str(candidate.metadata.get("description", "")),
+            str(candidate.metadata.get("attributes", {})),
+        ]
+    ).lower()
+    constraints = set(intent.constraints)
+    if {"week", "routine", "school", "work", "quick", "daily"} & constraints:
+        if any(word in text for word in ["quick", "morning", "daily", "work", "breakfast", "sunscreen"]):
+            return "It fits the weekly-routine request because it is practical for repeated use; "
+        return "It is less of a daily utility item, but still has enough persona fit to consider; "
+    if "family" in constraints or "weekend" in constraints:
+        if any(word in text for word in ["family", "party", "weekend", "children", "friends", "share"]):
+            return "It fits the weekend or family-use context directly; "
+        return "It is a secondary fit for the weekend context; "
+    if "buy" in constraints and "Books" == candidate.category:
+        return "It directly answers the book-buying request; "
+    return "It is ranked because the item evidence lines up with the current request; "
+
+
+def _quality_note(candidate: CandidateItem) -> str:
+    rating = candidate.metadata.get("average_rating")
+    try:
+        rating_text = f"with a {float(rating):.1f}/5 catalog signal, "
+    except (TypeError, ValueError):
+        rating_text = ""
+    return rating_text
