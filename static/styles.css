@@ -505,6 +505,11 @@ div {
 .b-chat-page {
   min-height: calc(100vh - 76px);
   padding: 0;
+  background:
+    linear-gradient(90deg, rgba(37, 99, 235, 0.04) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.04) 1px, transparent 1px),
+    #f8fafc;
+  background-size: 42px 42px;
 }
 
 .b-chat-app {
@@ -513,7 +518,7 @@ div {
   min-height: calc(100vh - 76px);
   border-left: 1px solid var(--line);
   border-right: 1px solid var(--line);
-  background: #fff;
+  background: transparent;
 }
 
 .b-chat-sidebar {
@@ -524,7 +529,8 @@ div {
   gap: 18px;
   height: calc(100vh - 76px);
   border-right: 1px solid var(--line);
-  background: #f8fafc;
+  background: rgba(248, 250, 252, 0.9);
+  backdrop-filter: blur(14px);
   padding: 24px;
   overflow-y: auto;
 }
@@ -560,7 +566,7 @@ div {
 
 .b-chat-main {
   min-height: 0;
-  background: #fff;
+  background: transparent;
   padding-bottom: 168px;
 }
 
