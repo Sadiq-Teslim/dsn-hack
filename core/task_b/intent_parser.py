@@ -40,6 +40,8 @@ CATEGORY_ALIASES = {
 def parse_intent(context: str, profile: UserProfile, include_categories: list[str]) -> IntentSignal:
     token_list = tokenize(context)
     tokens = set(token_list)
+    safety_redirect = _safety_redirect_request(context)
+    off_task = _off_task_request(context, tokens)
     explicit_new_user = _explicit_new_user(context, tokens)
     ambiguous_discovery = _ambiguous_discovery_request(context, tokens)
     min_price, max_price, max_price_exclusive, price_is_approximate = _extract_price_bounds(context)
@@ -98,9 +100,26 @@ def parse_intent(context: str, profile: UserProfile, include_categories: list[st
     if not categories and any(word in tokens for word in ["based", "taste", "like", "liked"]):
         is_cross_domain = True
     is_cold_start = profile.cold_start or explicit_new_user
-    needs_clarification = bool((is_cold_start and (len(tokens) < 8 or ambiguous_discovery)) or ambiguous_discovery)
+    needs_clarification = bool(
+        safety_redirect
+        or off_task
+        or (is_cold_start and (len(tokens) < 8 or ambiguous_discovery))
+        or ambiguous_discovery
+    )
     questions = []
-    if needs_clarification:
+    if safety_redirect:
+        constraints.append("safety_redirect")
+        questions = [
+            "I cannot reveal or override internal instructions. Please ask for a product, book, movie, food, game, or beauty recommendation instead.",
+            "Tell me the category, budget, mood, or occasion you want me to use.",
+        ]
+    elif off_task:
+        constraints.append("off_task_request")
+        questions = [
+            "I did not understand that as a recommendation request. What are you trying to choose?",
+            "Please mention a category such as books, food, movies, games, beauty products, or a budget or occasion.",
+        ]
+    elif needs_clarification:
         questions = [
             "What kind of thing are you looking for: books, food, movies, games, beauty products, or something else?",
             "What matters most for this choice: budget, quality, convenience, family use, or something fun?",
@@ -136,6 +155,65 @@ def _explicit_new_user(context: str, tokens: set[str]) -> bool:
             or "just starting" in text
         )
     )
+
+
+def _safety_redirect_request(context: str) -> bool:
+    text = context.lower()
+    patterns = [
+        r"\bignore\b.{0,40}\b(instruction|instructions|previous|above|system|developer)\b",
+        r"\b(system|developer)\s+(prompt|message|instruction|instructions)\b",
+        r"\b(print|show|reveal|display|dump|share)\b.{0,45}\b(prompt|instruction|instructions|system prompt|developer message)\b",
+        r"\bjailbreak\b",
+        r"\bdo anything now\b",
+        r"\bpretend\b.{0,30}\b(no rules|unrestricted)\b",
+    ]
+    return any(re.search(pattern, text) for pattern in patterns)
+
+
+def _off_task_request(context: str, tokens: set[str]) -> bool:
+    if not tokens:
+        return True
+    text = context.lower().strip()
+    if _safety_redirect_request(context):
+        return False
+    recommendation_words = {
+        "recommend",
+        "suggest",
+        "show",
+        "find",
+        "choose",
+        "buy",
+        "need",
+        "want",
+        "looking",
+        "read",
+        "watch",
+        "play",
+        "eat",
+        "use",
+    }
+    constraint_words = {
+        "budget",
+        "cheap",
+        "affordable",
+        "family",
+        "weekend",
+        "work",
+        "school",
+        "quick",
+        "routine",
+        "useful",
+        "daily",
+        "fun",
+        "quality",
+        "premium",
+    }
+    has_category = any(token in CATEGORY_ALIASES for token in tokens)
+    has_recommendation_intent = bool(tokens & recommendation_words)
+    has_constraint = bool(tokens & constraint_words)
+    has_price = any(char.isdigit() for char in context) or "$" in context
+    conversational_ack = bool(re.fullmatch(r"(ok|okay|thanks|thank you|nice|cool|alright|yes|no|maybe)[.! ]*", text))
+    return bool((len(tokens) <= 2 and not (has_category or has_constraint or has_price)) or (conversational_ack and not has_recommendation_intent))
 
 
 def _ambiguous_discovery_request(context: str, tokens: set[str]) -> bool:

@@ -121,8 +121,8 @@ function renderClarificationMessage(result) {
     .join("");
   return `
     <p class="text-sm font-black uppercase text-slate-400">Preference check</p>
-    <h2 class="mt-2 text-2xl font-black text-slate-950">I need two quick answers before recommending.</h2>
-    <p class="mt-3 leading-7 text-slate-600">Reply in the message box. I will keep this session and use your answer in the next turn.</p>
+    <h2 class="mt-2 text-2xl font-black text-slate-950">I need a clearer recommendation request.</h2>
+    <p class="mt-3 leading-7 text-slate-600">${escapeHtml(result.reasoning || "Reply in the message box with what you want me to recommend.")}</p>
     <ul class="mt-5 space-y-3 text-slate-700">${questions}</ul>
     <div class="agent-trace-bottom">${collapsedTrace(result.reasoning_trace)}</div>
   `;

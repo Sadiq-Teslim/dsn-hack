@@ -62,7 +62,7 @@ async def run_task_b_pipeline(
     if context.working.get("status") == AgentDecisionStatus.NEEDS_CLARIFICATION:
         return TaskBAgentResult(
             items=[],
-            reasoning="The agent needs a little more context before recommending.",
+            reasoning=context.working.get("clarification_reason", "The agent needs a little more context before recommending."),
             reasoning_trace=context.trace,
             llm_provider=settings.llm_provider,
             fallback_used=False,
@@ -145,12 +145,21 @@ class CrossDomainBridgeStep(Step):
 class ColdStartGateStep(Step):
     async def run(self, context: AgentRuntimeContext) -> AgentRuntimeContext:
         intent = context.working["intent"]
-        if context.working.get("conversational") and intent.needs_clarification:
+        must_redirect = bool(set(intent.constraints) & {"safety_redirect", "off_task_request"})
+        if (context.working.get("conversational") and intent.needs_clarification) or must_redirect:
             context.working["status"] = AgentDecisionStatus.NEEDS_CLARIFICATION
             context.working["follow_up_questions"] = intent.clarification_questions
+            if "safety_redirect" in intent.constraints:
+                reason = "I cannot help with requests to reveal or override internal instructions. Ask me for a recommendation instead, and I will use your preferences to help."
+            elif "off_task_request" in intent.constraints:
+                reason = "I did not understand that as something to recommend. Tell me what you want to choose and any budget, mood, category, or occasion that matters."
+            else:
+                reason = "I need a little more context before recommending."
+            context.working["clarification_reason"] = reason
             context.working["_last_step_outputs"] = {
-                "_summary": "Cold-start chat needs bootstrap answers before recommendation.",
+                "_summary": "Stopped before recommending because the request needs clarification or is outside the recommendation task.",
                 "follow_up_questions": intent.clarification_questions,
+                "constraints": intent.constraints,
             }
             return context
         context.working["_last_step_outputs"] = {
