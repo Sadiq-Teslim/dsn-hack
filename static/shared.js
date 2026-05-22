@@ -29,12 +29,7 @@ function escapeHtml(value) {
 }
 
 function renderBrandStatus(health) {
-  document.querySelectorAll("[data-health-text]").forEach((node) => {
-    node.textContent = health.groq_configured ? "Live Groq connection" : "Local demo mode";
-  });
-  document.querySelectorAll("[data-health-dot]").forEach((node) => {
-    node.classList.toggle("ok", health.status === "ok");
-  });
+  document.documentElement.dataset.serviceStatus = health.status || "unknown";
 }
 
 function personaSummary(persona) {
