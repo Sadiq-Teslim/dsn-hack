@@ -643,7 +643,7 @@ div {
   border-left: 1px solid var(--line);
   border-right: 1px solid var(--line);
   background: transparent;
-  animation: app-rise 520ms ease both;
+  animation: chat-fade-in 360ms ease both;
 }
 
 .b-chat-sidebar {
@@ -698,7 +698,7 @@ div {
 .b-chat-main {
   min-height: 0;
   background: transparent;
-  padding-bottom: 168px;
+  padding-bottom: 132px;
 }
 
 .chat-scroll {
@@ -716,6 +716,12 @@ div {
   background: rgba(255, 255, 255, 0.96);
   padding: 16px 24px 22px;
   backdrop-filter: blur(14px);
+}
+
+@supports (bottom: env(safe-area-inset-bottom)) {
+  .chat-composer-panel {
+    padding-bottom: calc(18px + env(safe-area-inset-bottom));
+  }
 }
 
 .composer-shell {
@@ -946,6 +952,15 @@ div {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes chat-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
@@ -1308,7 +1323,7 @@ div {
   }
 
   .b-chat-main {
-    padding-bottom: 178px;
+    padding-bottom: 132px;
   }
 
   .chat-composer-panel {
@@ -1359,7 +1374,7 @@ div {
   }
 
   .b-chat-main {
-    padding-bottom: 218px;
+    padding-bottom: 132px;
   }
 
   .chat-composer-buttons {

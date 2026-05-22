@@ -66,11 +66,9 @@ function scrollToLatestMessage() {
     const messages = $("recommend-result").querySelectorAll(".chat-message");
     const lastMessage = messages[messages.length - 1];
     if (!lastMessage) return;
-    const composerHeight = document.querySelector(".chat-composer-panel")?.offsetHeight || 160;
     const targetTop = lastMessage.getBoundingClientRect().top + window.scrollY - 96;
-    const maxTop = document.documentElement.scrollHeight - window.innerHeight;
     window.scrollTo({
-      top: Math.min(targetTop, Math.max(0, maxTop - composerHeight + 42)),
+      top: Math.max(0, targetTop),
       behavior: "smooth",
     });
   });
