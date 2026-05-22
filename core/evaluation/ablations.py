@@ -49,6 +49,7 @@ async def evaluate_agent_dataset(
     data_path: Path,
     output_path: Path | None = None,
     max_examples: int = 100,
+    require_llm: bool = False,
 ) -> dict[str, Any]:
     products = load_json(data_path / "products.json")
     splits = load_json(data_path / "splits.json")
@@ -75,7 +76,9 @@ async def evaluate_agent_dataset(
         )
     ]
 
-    settings = Settings(groq_api_key=None)
+    settings = Settings(llm_timeout_seconds=30.0)
+    if require_llm and not settings.groq_api_key:
+        raise RuntimeError("GROQ_API_KEY is required for this evaluation run.")
     full_errors: list[float] = []
     raw_errors: list[float] = []
     global_errors: list[float] = []
@@ -89,6 +92,8 @@ async def evaluate_agent_dataset(
     popularity_hits = 0
     evaluated = 0
     examples: list[dict[str, Any]] = []
+    task_a_fallbacks = 0
+    task_b_fallbacks = 0
 
     for held_out in splits["test"][:max_examples]:
         train_reviews = train_by_user.get(held_out["user_id"], [])
@@ -106,6 +111,7 @@ async def evaluate_agent_dataset(
         )
         target_rating = float(held_out["rating"])
         task_a = await run_task_a_pipeline(settings, persona, product, products, splits["train"])
+        task_a_fallbacks += int(task_a.fallback_used)
         full_errors.append(task_a.rating - target_rating)
         raw_errors.append(task_a.calibration.raw_rating - target_rating)
         global_errors.append(global_mean - target_rating)
@@ -121,6 +127,7 @@ async def evaluate_agent_dataset(
             10,
             conversational=False,
         )
+        task_b_fallbacks += int(task_b.fallback_used)
         full_ids = [item.item_id for item in task_b.items]
         local_ranked = rank_products(persona, products, held_out["category"], [], 10)
         local_ids = [item["item_id"] for item in local_ranked]
@@ -154,6 +161,7 @@ async def evaluate_agent_dataset(
             "global_mean_rmse": rmse(global_errors),
             "item_mean_rmse": rmse(item_errors),
             "rouge_l_f1": round(sum(rouge_scores) / max(1, len(rouge_scores)), 4),
+            "llm_fallback_count": task_a_fallbacks,
         },
         "task_b": {
             "agent_ndcg_at_10": round(sum(full_ndcg) / max(1, len(full_ndcg)), 4),
@@ -162,6 +170,7 @@ async def evaluate_agent_dataset(
             "agent_hit_rate_at_10": round(full_hits / max(1, evaluated), 4),
             "local_ranker_hit_rate_at_10": round(local_hits / max(1, evaluated), 4),
             "popularity_hit_rate_at_10": round(popularity_hits / max(1, evaluated), 4),
+            "llm_fallback_count": task_b_fallbacks,
         },
         "ablations": {
             "calibration_rmse_lift_vs_raw": round(rmse(raw_errors) - rmse(full_errors), 4),
@@ -178,12 +187,22 @@ async def evaluate_agent_dataset(
             ),
         },
         "examples": examples,
+        "llm_configured": bool(settings.groq_api_key),
     }
+    if require_llm and (task_a_fallbacks or task_b_fallbacks):
+        raise RuntimeError(
+            f"LLM-required evaluation used fallback text: task_a={task_a_fallbacks}, task_b={task_b_fallbacks}."
+        )
     if output_path:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
     return report
 
 
-def evaluate_agent_dataset_sync(data_path: Path, output_path: Path | None = None, max_examples: int = 100) -> dict[str, Any]:
-    return asyncio.run(evaluate_agent_dataset(data_path, output_path, max_examples))
+def evaluate_agent_dataset_sync(
+    data_path: Path,
+    output_path: Path | None = None,
+    max_examples: int = 100,
+    require_llm: bool = False,
+) -> dict[str, Any]:
+    return asyncio.run(evaluate_agent_dataset(data_path, output_path, max_examples, require_llm))

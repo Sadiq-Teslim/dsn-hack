@@ -12,11 +12,12 @@ def calibrate_rating(
 ) -> RatingCalibration:
     sentiment = clamp(sentiment, 0, 1)
     sentiment_rating = 1 + sentiment * 4
+    external_base = base_rating is not None
     if base_rating is None:
         base_rating = 0.62 * sentiment_rating + 0.23 * catalog_rating + 0.15 * (profile.rating_mean or 3.8)
     user_mean = profile.rating_mean or 3.8
-    shift_scale = 0.22 if base_rating is None else 0.03
-    variance_scale = 0.10 if base_rating is None else 0.02
+    shift_scale = 0.35 if external_base else 0.45
+    variance_scale = 0.08 if external_base else 0.15
     strictness_shift = (user_mean - 3.8) * shift_scale
     variance_shift = 0.0
     if profile.rating_std < 0.45 and profile.history_count >= 2:

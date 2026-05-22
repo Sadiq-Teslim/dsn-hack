@@ -23,7 +23,7 @@ class CoreLLMClient:
         self,
         messages: list[dict[str, str]],
         temperature: float = 0.25,
-        attempts: int = 2,
+        attempts: int = 3,
     ) -> tuple[dict[str, Any] | None, dict[str, Any]]:
         started = time.perf_counter()
         last_text: str | None = None

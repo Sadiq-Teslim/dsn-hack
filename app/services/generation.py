@@ -54,18 +54,58 @@ def fallback_review(
 ) -> str:
     strengths = persona.likes[:2] or persona.interests[:2] or ["practical value"]
     caveat = persona.dislikes[0] if persona.dislikes else "anything that feels overpriced"
-    local_note = ""
-    if "nigeria" in f"{persona.location} {persona.cultural_context}".lower():
-        local_note = " For my Nigerian day-to-day, the convenience and value matter a lot."
-    evidence_note = ""
-    if evidence:
-        evidence_note = f" It reminds me of what I liked about {evidence[0].title.lower()}."
-    return (
-        f"I would give {product.title} {rating:.1f} stars. "
-        f"It fits my taste for {', '.join(strengths)}, and the {product.category.replace('_', ' ')} "
-        f"use case is clear.{local_note}{evidence_note} "
-        f"My only watch-out is {caveat}, but overall it feels like something I would recommend."
-    )
+    evidence_note = _evidence_sentence(evidence)
+    local_note = _local_context_sentence(persona)
+    category = product.category.replace("_", " ")
+    if rating >= 4.5:
+        verdict = (
+            f"I would happily give {product.title} {rating:.1f} stars. The {category} fit is strong, "
+            f"especially because I care about {', '.join(strengths)}."
+        )
+        close = "I would buy it again and recommend it without much hesitation."
+    elif rating >= 3.8:
+        verdict = (
+            f"{product.title} lands at {rating:.1f} stars for me. It does enough things right for the "
+            f"{category} use case, especially around {', '.join(strengths)}."
+        )
+        close = f"I would recommend it, but I would still watch out for {caveat}."
+    elif rating >= 2.8:
+        verdict = (
+            f"I would keep {product.title} around {rating:.1f} stars. It is not a total miss, but the "
+            f"value feels mixed for my needs."
+        )
+        close = f"If {caveat} matters to you, I would compare alternatives first."
+    else:
+        verdict = (
+            f"{product.title} is a {rating:.1f}-star experience for me. It misses too much of what I "
+            f"expect from this kind of {category} product."
+        )
+        close = f"I would not recommend it unless the quality improves or the price drops clearly."
+    return " ".join(f"{verdict} {local_note} {evidence_note} {close}".split())
+
+
+def _evidence_sentence(evidence: list[EvidenceItem]) -> str:
+    if not evidence:
+        return ""
+    top = evidence[0]
+    source = "my own past review" if top.source == "own_history" else "a similar review"
+    review = (top.review_text or top.reason).strip()
+    if len(review) > 120:
+        review = review[:117].rstrip() + "..."
+    return f"It connects with {source} for {top.title.lower()}: {review}"
+
+
+def _local_context_sentence(persona: UserPersona) -> str:
+    text = f"{persona.location} {persona.cultural_context}".lower()
+    if "lagos" in text:
+        return "For a Lagos routine, price, speed, and everyday usefulness matter here."
+    if "abuja" in text:
+        return "For an Abuja work routine, I am weighing polish, reliability, and daily convenience."
+    if "port harcourt" in text:
+        return "For home and family use, I care about whether everyone can actually benefit from it."
+    if "nigeria" in text:
+        return "For my Nigerian day-to-day, value and practical usefulness matter."
+    return ""
 
 
 def fallback_recommendation_summary(persona: UserPersona, context: str) -> str:

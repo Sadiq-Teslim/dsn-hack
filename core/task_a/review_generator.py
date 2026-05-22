@@ -30,7 +30,11 @@ async def generate_grounded_review(
             "content": (
                 "You generate user-faithful product reviews. Return strict JSON only with schema "
                 "{\"review_text\":\"55-110 word first-person review\"}. Do not mention AI. "
-                "Use the calibrated rating as fixed. Use Nigerian register only if it naturally fits."
+                "Use the calibrated rating as fixed. Write naturally, with varied sentence structure. "
+                "Do not use generic phrases like 'use case is clear', 'fits my taste', or "
+                "'overall it feels like something I would recommend'. If the rating is low, the review "
+                "must sound disappointed; if high, it may recommend. Use Nigerian register only if it "
+                "naturally fits the persona."
             ),
         },
         {
@@ -44,12 +48,12 @@ async def generate_grounded_review(
                 f"Calibrated rating: {rating}/5.\n"
                 f"Retrieved review evidence:\n{evidence_text or 'None'}\n"
                 f"Nigerian register exemplars:\n{exemplar_text or 'None'}\n"
-                "Write one realistic review consistent with rating, evidence, and persona."
+                "Write one realistic review consistent with rating, evidence, and persona. Avoid templates."
             ),
         },
     ]
-    parsed, meta = await llm.json_chat(messages, temperature=0.42)
+    parsed, meta = await llm.json_chat(messages, temperature=0.42, attempts=4)
     text = parsed.get("review_text") if parsed else None
-    if isinstance(text, str) and len(text.split()) >= 35:
+    if isinstance(text, str) and len(text.split()) >= 20:
         return " ".join(text.split()), bool(meta.get("fallback_used")), meta
     return fallback_review(UserPersona.model_validate(persona), product, rating, evidence), True, meta

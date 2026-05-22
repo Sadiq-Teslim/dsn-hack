@@ -16,8 +16,9 @@ def main() -> None:
     parser.add_argument("--data-path", type=Path, default=Path("data/amazon_subset"))
     parser.add_argument("--output", type=Path, default=Path("docs/core_evaluation_report.json"))
     parser.add_argument("--max-examples", type=int, default=100)
+    parser.add_argument("--require-llm", action="store_true")
     args = parser.parse_args()
-    report = evaluate_agent_dataset_sync(args.data_path, args.output, args.max_examples)
+    report = evaluate_agent_dataset_sync(args.data_path, args.output, args.max_examples, args.require_llm)
     print(json.dumps(report, indent=2))
 
 

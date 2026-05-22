@@ -27,7 +27,8 @@ async def llm_rerank_candidates(
                 "You are a recommender re-ranker. Reason before recommending. Return strict JSON only. "
                 "Schema: {\"ranked\":[{\"title\":\"candidate title\", \"llm_score\":0.0, "
                 "\"reason\":\"specific reason grounded in persona and context\"}]}. "
-                "Use only candidate titles provided. Score 0-1."
+                "Use only candidate titles provided. Score 0-1. Reasons must be natural and specific. "
+                "Do not cite generic query words such as 'based', 'recommend', 'food', or 'item' as preferences."
             ),
         },
         {
@@ -43,13 +44,13 @@ async def llm_rerank_candidates(
             ),
         },
     ]
-    parsed, meta = await llm.json_chat(messages, temperature=0.20)
+    parsed, meta = await llm.json_chat(messages, temperature=0.20, attempts=4)
     if parsed and isinstance(parsed.get("ranked"), list):
-        by_title = {item.title.lower(): item for item in shortlist}
+        by_title = {_normalize_title(item.title): item for item in shortlist}
         reranked: list[CandidateItem] = []
         for row in parsed["ranked"]:
-            title = str(row.get("title", "")).lower()
-            candidate = by_title.get(title)
+            title = _normalize_title(str(row.get("title", "")))
+            candidate = by_title.get(title) or _nearest_title_match(title, shortlist)
             if not candidate:
                 continue
             llm_score = _safe_score(row.get("llm_score"), candidate.local_score)
@@ -60,7 +61,11 @@ async def llm_rerank_candidates(
                 candidate.reason = reason
             reranked.append(candidate)
         if reranked:
-            remaining = [item for item in candidates if item.title.lower() not in {r.title.lower() for r in reranked}]
+            remaining = [
+                item
+                for item in candidates
+                if _normalize_title(item.title) not in {_normalize_title(r.title) for r in reranked}
+            ]
             return _sort_for_intent(reranked, intent) + remaining, bool(meta.get("fallback_used")), meta
 
     fallback = []
@@ -88,6 +93,23 @@ def _safe_score(value: object, fallback: float) -> float:
         return stable_round(clamp(float(value), 0, 1))
     except (TypeError, ValueError):
         return fallback
+
+
+def _normalize_title(title: str) -> str:
+    return " ".join(ch.lower() for ch in title if ch.isalnum() or ch.isspace()).strip()
+
+
+def _nearest_title_match(title: str, candidates: list[CandidateItem]) -> CandidateItem | None:
+    if not title:
+        return None
+    title_tokens = set(title.split())
+    best: tuple[float, CandidateItem] | None = None
+    for candidate in candidates:
+        candidate_tokens = set(_normalize_title(candidate.title).split())
+        overlap = len(title_tokens & candidate_tokens) / max(1, len(title_tokens | candidate_tokens))
+        if overlap >= 0.72 and (best is None or overlap > best[0]):
+            best = (overlap, candidate)
+    return best[1] if best else None
 
 
 def _fallback_reason(profile: UserProfile, intent: IntentSignal, candidate: CandidateItem) -> str:

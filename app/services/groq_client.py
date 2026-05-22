@@ -1,3 +1,4 @@
+import asyncio
 import json
 from typing import Any
 
@@ -36,12 +37,20 @@ class GroqClient:
             "Authorization": f"Bearer {self.settings.groq_api_key}",
             "Content-Type": "application/json",
         }
-        try:
-            async with httpx.AsyncClient(timeout=self.settings.llm_timeout_seconds) as client:
-                response = await client.post(url, headers=headers, json=payload)
-                response.raise_for_status()
-                data = response.json()
-        except (httpx.HTTPError, json.JSONDecodeError, KeyError, IndexError):
+        data = None
+        for attempt in range(3):
+            try:
+                async with httpx.AsyncClient(timeout=self.settings.llm_timeout_seconds) as client:
+                    response = await client.post(url, headers=headers, json=payload)
+                    response.raise_for_status()
+                    data = response.json()
+                    break
+            except (httpx.HTTPError, json.JSONDecodeError, KeyError, IndexError, OSError):
+                if attempt < 2:
+                    await asyncio.sleep(0.6 * (attempt + 1))
+                    continue
+                return None
+        if data is None:
             return None
 
         try:
