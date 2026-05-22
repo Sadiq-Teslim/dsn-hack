@@ -519,6 +519,7 @@ div {
   border-left: 1px solid var(--line);
   border-right: 1px solid var(--line);
   background: transparent;
+  animation: app-rise 520ms ease both;
 }
 
 .b-chat-sidebar {
@@ -533,6 +534,7 @@ div {
   backdrop-filter: blur(14px);
   padding: 24px;
   overflow-y: auto;
+  animation: sidebar-slide 560ms ease both;
 }
 
 .b-prompt-stack {
@@ -556,7 +558,12 @@ div {
     border-color 160ms ease,
     box-shadow 160ms ease,
     transform 160ms ease;
+  animation: soft-pop 420ms ease both;
 }
+
+.prompt-chip:nth-child(2) { animation-delay: 50ms; }
+.prompt-chip:nth-child(3) { animation-delay: 100ms; }
+.prompt-chip:nth-child(4) { animation-delay: 150ms; }
 
 .prompt-chip:hover {
   border-color: rgba(17, 24, 39, 0.18);
@@ -595,6 +602,7 @@ div {
   background: #fff;
   box-shadow: 0 18px 50px rgba(15, 23, 42, 0.12);
   padding: 12px;
+  animation: composer-lift 520ms ease both;
 }
 
 .chat-input {
@@ -641,6 +649,7 @@ div {
   padding: 18px 0;
   scroll-margin-top: 96px;
   scroll-margin-bottom: 190px;
+  animation: message-in 360ms ease both;
 }
 
 .chat-message.user {
@@ -658,6 +667,7 @@ div {
   border-color: #111827;
   border-radius: 20px 20px 4px 20px;
   box-shadow: none;
+  animation: user-bubble-in 260ms ease both;
 }
 
 .chat-message.agent .chat-bubble {
@@ -665,6 +675,7 @@ div {
   border-color: transparent;
   background: #fff;
   box-shadow: none;
+  animation: agent-bubble-in 320ms ease both;
 }
 
 .chat-avatar {
@@ -710,6 +721,7 @@ div {
   border-radius: 18px;
   background: #f8fafc;
   padding: 14px 16px;
+  animation: agent-bubble-in 260ms ease both;
 }
 
 .typing-bubble span {
@@ -736,6 +748,92 @@ div {
   40% {
     opacity: 1;
     transform: translateY(-4px);
+  }
+}
+
+@keyframes app-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sidebar-slide {
+  from {
+    opacity: 0;
+    transform: translateX(-18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes composer-lift {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes message-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes agent-bubble-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes user-bubble-in {
+  from {
+    opacity: 0;
+    transform: translate(14px, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes card-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes soft-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -796,6 +894,18 @@ div {
   padding: 15px;
   margin-top: 10px;
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+  animation: card-rise 360ms ease both;
+  animation-delay: calc(var(--stagger, 0) * 45ms);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.chat-recommendation-row:hover {
+  border-color: rgba(17, 24, 39, 0.18);
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.09);
+  transform: translateY(-2px);
 }
 
 .recommendation-row h3,
@@ -1031,6 +1141,17 @@ div {
   .button-primary,
   .button-secondary {
     width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
   }
 }
 

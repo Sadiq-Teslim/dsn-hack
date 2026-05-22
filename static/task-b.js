@@ -131,13 +131,13 @@ function renderClarificationMessage(result) {
 
 function renderRecommendationsMessage(result) {
   const rows = (result.items || [])
-    .map((item) => {
+    .map((item, index) => {
       const matches = (item.matched_preferences || [])
         .map((match) => `<span class="tag">${escapeHtml(match)}</span>`)
         .join("");
       const score = Number(item.score || 0).toFixed(3);
       return `
-        <div class="recommendation-row chat-recommendation-row">
+        <div class="recommendation-row chat-recommendation-row" style="--stagger: ${index}">
           <div class="rank-badge">${escapeHtml(item.rank)}</div>
           <div>
             <h3 class="text-xl font-black text-slate-950">${escapeHtml(item.title)}</h3>
