@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Task B | Recommendations</title>
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="/static/styles.css?v=3" />
+    <link rel="stylesheet" href="/static/styles.css?v=4" />
   </head>
   <body>
     <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/85 backdrop-blur-xl">
@@ -26,55 +26,88 @@
       </div>
     </header>
 
-    <main class="shell py-10">
-      <section class="mb-8 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
-        <div>
-          <span class="pill"><span class="dot" data-health-dot></span><span data-health-text>Checking service</span></span>
-          <p class="mt-7 text-sm font-black uppercase text-[#34A853]">Task B / Recommendation</p>
-          <h1 class="mt-2 max-w-4xl text-5xl font-black leading-none text-slate-950 md:text-7xl">
-            Rank items around a person's real context.
-          </h1>
-          <p class="mt-5 max-w-2xl text-lg font-semibold leading-8 text-slate-600">
-            The ranker scores candidates from history, persona preferences, context text, budget fit,
-            product quality, and cross-domain cold-start signals.
-          </p>
-        </div>
-        <a href="#recommend-context" class="button-primary">Start Chat</a>
-      </section>
+    <main class="b-chat-page">
+      <section class="b-chat-app">
+        <aside class="b-chat-sidebar">
+          <div>
+            <span class="pill"><span class="dot" data-health-dot></span><span data-health-text>Checking service</span></span>
+            <p class="mt-5 text-sm font-black uppercase text-[#34A853]">Task B / Recommendation</p>
+            <h1 class="mt-2 text-3xl font-black leading-none text-slate-950">Recommendation chat</h1>
+            <p class="mt-3 text-sm font-semibold leading-7 text-slate-600">
+              Ask for books, food, movies, beauty picks, games, cold-start help, or cross-domain recommendations.
+            </p>
+          </div>
 
-      <section class="workspace-grid">
-        <aside class="panel p-5">
-          <label class="mb-5 block">
+          <label class="mt-6 block">
             <span class="field-label">Persona</span>
             <select id="persona-select" class="select"></select>
           </label>
-          <div id="persona-card"></div>
-        </aside>
+          <div id="persona-card" class="mt-5"></div>
 
-        <section class="grid gap-5">
-          <div class="panel p-5 chat-composer-panel">
-            <label class="block">
-              <span class="field-label">Chat message</span>
-              <textarea id="recommend-context" rows="3" class="textarea">I want useful options for this week that fit my budget and routine.</textarea>
-            </label>
-            <div class="chat-composer-actions">
-              <span id="context-voice-status" class="voice-status">Voice input loading...</span>
-              <div class="chat-composer-buttons">
-                <button id="speak-context" class="button-secondary" type="button">Speak</button>
-                <button id="generate-recommendations" class="button-primary" type="button">Send</button>
-              </div>
-            </div>
-            <div class="mt-4 flex flex-wrap gap-2">
-              <button class="tag" data-context="I need affordable things for a busy school week.">Student week</button>
-              <button class="tag" data-context="I want quality picks for weekday work routines and relaxed evenings.">Work routine</button>
-              <button class="tag" data-context="I am shopping for family-friendly home use and guests this weekend.">Family weekend</button>
-            </div>
+          <div class="b-prompt-stack">
+            <button class="prompt-chip" data-context="I need affordable things for a busy school week.">Student week</button>
+            <button class="prompt-chip" data-context="I want to buy five books.">Five books</button>
+            <button class="prompt-chip" data-context="Recommend a family weekend movie and snacks.">Movie + snacks</button>
+            <button class="prompt-chip" data-context="Based on my movie taste, recommend me food for the weekend.">Cross-domain food</button>
           </div>
 
-          <article id="recommend-result" class="panel result-box p-6">
+          <details id="yarn-card" class="yarn-panel chat-yarn-drawer">
+            <summary>Voice / YarnGPT</summary>
+            <div class="mt-5">
+              <div class="flex items-center gap-3">
+                <span class="voice-bars" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+                <div>
+                  <p class="text-sm font-black uppercase text-slate-500">Yarn Mode</p>
+                  <h2 class="text-xl font-black text-slate-950">Explain the ranking like a local voice note</h2>
+                </div>
+              </div>
+              <div class="yarn-controls mt-5">
+                <label class="block">
+                  <span class="field-label">Voice style</span>
+                  <select id="yarn-mode" class="select">
+                    <option>Nigerian Pidgin</option>
+                    <option>Yoruba-flavoured English</option>
+                    <option>Hausa-flavoured English</option>
+                    <option>Igbo-flavoured English</option>
+                    <option>Formal judge summary</option>
+                  </select>
+                </label>
+                <label class="block">
+                  <span class="field-label">YarnGPT voice</span>
+                  <select id="yarngpt-voice" class="select">
+                    <option>Idera</option>
+                    <option>Emma</option>
+                    <option>Zainab</option>
+                    <option>Osagie</option>
+                    <option>Wura</option>
+                    <option>Jude</option>
+                    <option>Chinenye</option>
+                    <option>Tayo</option>
+                    <option>Regina</option>
+                    <option>Femi</option>
+                    <option>Adaora</option>
+                    <option>Umar</option>
+                    <option>Mary</option>
+                    <option>Nonso</option>
+                    <option>Remi</option>
+                    <option>Adam</option>
+                  </select>
+                </label>
+                <button id="generate-yarn" class="button-secondary" type="button" disabled>Yarn It</button>
+                <button id="speak-yarn" class="button-primary" type="button" disabled>Generate Audio</button>
+              </div>
+              <audio id="yarn-audio" class="mt-4" controls hidden></audio>
+              <div id="yarn-result" class="mt-5 rounded-3xl bg-white p-5 text-slate-700">
+                Generate recommendations first.
+              </div>
+            </div>
+          </details>
+        </aside>
+
+        <section class="b-chat-main">
+          <article id="recommend-result" class="chat-scroll">
             <div class="chat-thread">
               <div class="chat-message agent">
-                <div class="chat-avatar">A</div>
                 <div class="chat-bubble">
                   <p class="text-sm font-black uppercase text-slate-400">Recommendation agent</p>
                   <h2 class="mt-2 text-2xl font-black text-slate-950">Tell me what you need and I will reason before ranking.</h2>
@@ -84,60 +117,23 @@
             </div>
           </article>
 
-          <article id="yarn-card" class="yarn-panel">
-            <div class="flex items-center gap-3">
-              <span class="voice-bars" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
-              <div>
-                <p class="text-sm font-black uppercase text-slate-500">Yarn Mode</p>
-                <h2 class="text-2xl font-black text-slate-950">Explain the ranking like a local voice note</h2>
+          <div class="chat-composer-panel">
+            <div class="composer-shell">
+              <textarea id="recommend-context" rows="1" class="chat-input" aria-label="Chat message">I want useful options for this week that fit my budget and routine.</textarea>
+              <div class="composer-footer">
+                <span id="context-voice-status" class="voice-status">Voice input loading...</span>
+                <div class="chat-composer-buttons">
+                  <button id="speak-context" class="button-secondary" type="button">Speak</button>
+                  <button id="generate-recommendations" class="button-primary" type="button">Send</button>
+                </div>
               </div>
             </div>
-            <div class="yarn-controls mt-5">
-              <label class="block">
-                <span class="field-label">Voice style</span>
-                <select id="yarn-mode" class="select">
-                  <option>Nigerian Pidgin</option>
-                  <option>Yoruba-flavoured English</option>
-                  <option>Hausa-flavoured English</option>
-                  <option>Igbo-flavoured English</option>
-                  <option>Formal judge summary</option>
-                </select>
-              </label>
-              <label class="block">
-                <span class="field-label">YarnGPT voice</span>
-                <select id="yarngpt-voice" class="select">
-                  <option>Idera</option>
-                  <option>Emma</option>
-                  <option>Zainab</option>
-                  <option>Osagie</option>
-                  <option>Wura</option>
-                  <option>Jude</option>
-                  <option>Chinenye</option>
-                  <option>Tayo</option>
-                  <option>Regina</option>
-                  <option>Femi</option>
-                  <option>Adaora</option>
-                  <option>Umar</option>
-                  <option>Mary</option>
-                  <option>Nonso</option>
-                  <option>Remi</option>
-                  <option>Adam</option>
-                </select>
-              </label>
-              <button id="generate-yarn" class="button-secondary" type="button" disabled>Yarn It</button>
-              <button id="speak-yarn" class="button-primary" type="button" disabled>Generate Audio</button>
-            </div>
-            <audio id="yarn-audio" class="mt-4" controls hidden></audio>
-            <div id="yarn-result" class="mt-5 rounded-3xl bg-white p-5 text-slate-700">
-              Generate recommendations first.
-            </div>
-          </article>
-
+          </div>
         </section>
       </section>
     </main>
 
-    <script src="/static/shared.js?v=3"></script>
-    <script src="/static/task-b.js?v=3"></script>
+    <script src="/static/shared.js?v=4"></script>
+    <script src="/static/task-b.js?v=4"></script>
   </body>
 </html>

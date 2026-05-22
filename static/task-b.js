@@ -38,9 +38,9 @@ function resetConversation() {
       id: nextMessageId(),
       role: "agent",
       html: `
-        <p class="text-sm font-black uppercase text-slate-400">Recommendation agent</p>
-        <h2 class="mt-2 text-2xl font-black text-slate-950">Tell me what you need and I will reason before ranking.</h2>
-        <p class="mt-3 leading-7 text-slate-600">Try a cold-start prompt, a cross-domain request, or a constraint like budget, family use, mood, or location.</p>
+        <p class="message-label">Recommendation agent</p>
+        <h2 class="mt-2 text-2xl font-black text-slate-950">What should I help you choose?</h2>
+        <p class="mt-3 leading-7 text-slate-600">Ask naturally. I can handle books, groceries, movies, games, beauty picks, cold-start questions, and cross-domain requests.</p>
       `,
     },
   ];
@@ -52,20 +52,17 @@ function resetConversation() {
 }
 
 function renderConversation() {
-  const visibleMessages = conversation.slice(-6);
   $("recommend-result").innerHTML = `
     <div class="chat-thread">
-      ${visibleMessages.map(renderChatMessage).join("")}
+      ${conversation.map(renderChatMessage).join("")}
     </div>
   `;
   $("recommend-result").scrollTop = $("recommend-result").scrollHeight;
 }
 
 function renderChatMessage(message) {
-  const avatar = message.role === "user" ? "U" : "A";
   return `
     <div class="chat-message ${message.role}">
-      <div class="chat-avatar">${avatar}</div>
       <div class="chat-bubble">${message.html}</div>
     </div>
   `;
@@ -88,15 +85,20 @@ function replaceMessage(id, html) {
 
 function progressMessage() {
   return `
-    <div class="agent-progress">
-      <p class="text-sm font-black uppercase text-slate-400">Agent workflow running</p>
-      <div class="mt-4 progress-steps">
-        <span>Parsing intent</span>
-        <span>Retrieving candidates</span>
-        <span>Reranking with reasoning</span>
-      </div>
+    <div class="typing-bubble" aria-label="Agent is thinking">
+      <span></span>
+      <span></span>
+      <span></span>
     </div>
   `;
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+function collapsedTrace(trace) {
+  return renderReasoningTrace(trace).replace(" open>", ">");
 }
 
 function renderClarificationMessage(result) {
@@ -108,7 +110,7 @@ function renderClarificationMessage(result) {
     <h2 class="mt-2 text-2xl font-black text-slate-950">I need two quick answers before ranking.</h2>
     <p class="mt-3 leading-7 text-slate-600">Reply in the message box. I will keep this session and use your answer in the next turn.</p>
     <ul class="mt-5 space-y-3 text-slate-700">${questions}</ul>
-    ${renderReasoningTrace(result.reasoning_trace)}
+    <div class="agent-trace-bottom">${collapsedTrace(result.reasoning_trace)}</div>
   `;
 }
 
@@ -120,7 +122,7 @@ function renderRecommendationsMessage(result) {
         .join("");
       const score = Number(item.score || 0).toFixed(3);
       return `
-        <div class="recommendation-row">
+        <div class="recommendation-row chat-recommendation-row">
           <div class="rank-badge">${escapeHtml(item.rank)}</div>
           <div>
             <h3 class="text-xl font-black text-slate-950">${escapeHtml(item.title)}</h3>
@@ -145,10 +147,10 @@ function renderRecommendationsMessage(result) {
   $("yarn-result").innerHTML = "Ready. Choose a voice style and click Yarn It.";
 
   return `
-    <p class="text-sm font-black uppercase text-emerald-700">Ranked response</p>
-    <p class="mt-2 leading-7 text-emerald-950">${escapeHtml(result.reasoning || "I ranked the best matching candidates for this turn.")}</p>
+    <p class="message-label text-emerald-700">Ranked response</p>
+    <p class="mt-2 leading-7 text-slate-700">${escapeHtml(result.reasoning || "I ranked the best matching candidates for this turn.")}</p>
     <div class="mt-5">${rows || '<p class="text-slate-600">No candidates were returned. Try a broader request.</p>'}</div>
-    ${renderReasoningTrace(result.reasoning_trace)}
+    <div class="agent-trace-bottom">${collapsedTrace(result.reasoning_trace)}</div>
   `;
 }
 
@@ -167,22 +169,26 @@ async function generateRecommendations() {
     return;
   }
 
-  addMessage("user", `<p class="leading-7 text-slate-800">${escapeHtml(text)}</p>`);
+  addMessage("user", `<p class="leading-7">${escapeHtml(text)}</p>`);
   input.value = "";
+  resizeComposer();
   const loadingId = addMessage("agent", progressMessage());
   $("generate-recommendations").disabled = true;
 
   try {
-    const result = await api("/api/v1/recommend", {
-      method: "POST",
-      body: JSON.stringify({
-        user_persona: state.activePersona.persona,
-        context: text,
-        top_k: 10,
-        session_id: activeSessionId,
-        conversational: true,
+    const [result] = await Promise.all([
+      api("/api/v1/recommend", {
+        method: "POST",
+        body: JSON.stringify({
+          user_persona: state.activePersona.persona,
+          context: text,
+          top_k: 10,
+          session_id: activeSessionId,
+          conversational: true,
+        }),
       }),
-    });
+      sleep(1900),
+    ]);
     activeSessionId = result.session_id || activeSessionId;
     replaceMessage(
       loadingId,
@@ -196,6 +202,12 @@ async function generateRecommendations() {
     $("generate-recommendations").disabled = false;
     input.focus();
   }
+}
+
+function resizeComposer() {
+  const input = $("recommend-context");
+  input.style.height = "auto";
+  input.style.height = `${Math.min(input.scrollHeight, 180)}px`;
 }
 
 async function generateYarn() {
@@ -222,6 +234,7 @@ async function init() {
   document.querySelectorAll("[data-context]").forEach((button) => {
     button.addEventListener("click", () => {
       $("recommend-context").value = button.dataset.context;
+      resizeComposer();
       $("recommend-context").focus();
     });
   });
@@ -230,12 +243,14 @@ async function init() {
     target: $("recommend-context"),
     status: $("context-voice-status"),
   });
+  $("recommend-context").addEventListener("input", resizeComposer);
   $("recommend-context").addEventListener("keydown", (event) => {
-    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+    if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       generateRecommendations();
     }
   });
+  resizeComposer();
   $("generate-recommendations").addEventListener("click", generateRecommendations);
   $("generate-yarn").addEventListener("click", generateYarn);
   $("speak-yarn").addEventListener("click", () => {
