@@ -135,17 +135,26 @@ def _score_products(
 
 
 def _within_price_limit(price: object, intent: IntentSignal) -> bool:
-    if intent.max_price is None:
-        return True
     if price is None:
-        return False
+        return intent.min_price is None and intent.max_price is None
     try:
         price_float = float(price)
     except (TypeError, ValueError):
         return False
+    min_price = intent.min_price
+    max_price = intent.max_price
+    if intent.price_is_approximate:
+        if min_price is not None:
+            min_price = max(0.0, min_price * 0.92)
+        if max_price is not None:
+            max_price = max_price * 1.08
+    if min_price is not None and price_float < min_price:
+        return False
+    if max_price is None:
+        return True
     if intent.max_price_exclusive:
-        return price_float < intent.max_price
-    return price_float <= intent.max_price
+        return price_float < max_price
+    return price_float <= max_price
 
 
 def _budget_penalty(profile: UserProfile, price: object) -> float:

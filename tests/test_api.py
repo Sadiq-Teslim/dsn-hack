@@ -179,6 +179,41 @@ def test_recommendation_respects_excluded_categories() -> None:
     assert "Movies_and_TV" in parse_step["outputs"]["excluded_categories"]
 
 
+def test_follow_up_filters_previous_recommendations_with_price_range() -> None:
+    persona = client.get("/api/v1/demo-personas").json()[1]["persona"]
+    first = client.post(
+        "/api/v1/recommend",
+        json={
+            "user_persona": persona,
+            "context": "I need a game",
+            "top_k": 8,
+            "conversational": True,
+        },
+    )
+    assert first.status_code == 200
+    first_payload = first.json()
+    previous_titles = {item["title"] for item in first_payload["items"]}
+    follow_up = client.post(
+        "/api/v1/recommend",
+        json={
+            "user_persona": persona,
+            "context": "Which of them is around $70-$100?",
+            "top_k": 8,
+            "session_id": first_payload["session_id"],
+            "conversational": True,
+        },
+    )
+    assert follow_up.status_code == 200
+    payload = follow_up.json()
+    assert payload["items"]
+    assert {item["title"] for item in payload["items"]}.issubset(previous_titles)
+    assert all(64.4 <= item["price"] <= 108 for item in payload["items"])
+    shortlist = next(step for step in payload["reasoning_trace"]["steps"] if step["name"] == "CandidateShortlistStep")
+    assert shortlist["outputs"]["follow_up_scope"] is True
+    assert shortlist["outputs"]["min_price"] == 70.0
+    assert shortlist["outputs"]["max_price"] == 100.0
+
+
 def test_fixture_evaluation_metrics() -> None:
     response = client.get("/api/v1/evaluation")
     assert response.status_code == 200

@@ -40,7 +40,7 @@ CATEGORY_ALIASES = {
 def parse_intent(context: str, profile: UserProfile, include_categories: list[str]) -> IntentSignal:
     token_list = tokenize(context)
     tokens = set(token_list)
-    max_price, max_price_exclusive = _extract_max_price(context)
+    min_price, max_price, max_price_exclusive, price_is_approximate = _extract_price_bounds(context)
     excluded_categories = _excluded_categories_from_context(token_list)
     categories = list(include_categories)
     mentioned = [
@@ -110,8 +110,10 @@ def parse_intent(context: str, profile: UserProfile, include_categories: list[st
         unsupported_targets=[],
         excluded_categories=excluded_categories,
         constraints=constraints,
+        min_price=min_price,
         max_price=max_price,
         max_price_exclusive=max_price_exclusive,
+        price_is_approximate=price_is_approximate,
         taste_descriptors=descriptors,
         is_cross_domain=is_cross_domain,
         is_cold_start=is_cold_start,
@@ -133,8 +135,15 @@ def _excluded_categories_from_context(tokens: list[str]) -> list[str]:
     return excluded
 
 
-def _extract_max_price(context: str) -> tuple[float | None, bool]:
+def _extract_price_bounds(context: str) -> tuple[float | None, float | None, bool, bool]:
     text = context.lower().replace(",", "")
+    approximate = bool(re.search(r"\b(?:around|about|roughly|approximately|close\s+to)\b", text))
+    range_match = re.search(r"\$?\s*(\d+(?:\.\d+)?)\s*(?:-|to|and)\s*\$?\s*(\d+(?:\.\d+)?)\b", text)
+    if range_match:
+        low = float(range_match.group(1))
+        high = float(range_match.group(2))
+        min_price, max_price = sorted([low, high])
+        return min_price, max_price, False, approximate
     patterns = [
         (r"\b(?:below|under|less\s+than)\s*\$?\s*(\d+(?:\.\d+)?)\b", True),
         (r"\b(?:at\s+most|not\s+more\s+than|no\s+more\s+than|maximum|max(?:imum)?\s+of|up\s+to)\s*\$?\s*(\d+(?:\.\d+)?)\b", False),
@@ -145,8 +154,17 @@ def _extract_max_price(context: str) -> tuple[float | None, bool]:
     for pattern, exclusive in patterns:
         match = re.search(pattern, text)
         if match:
-            return float(match.group(1)), exclusive
-    return None, False
+            return None, float(match.group(1)), exclusive, approximate
+    min_patterns = [
+        r"\b(?:above|over|more\s+than)\s*\$?\s*(\d+(?:\.\d+)?)\b",
+        r"\b(?:at\s+least|minimum|min(?:imum)?\s+of)\s*\$?\s*(\d+(?:\.\d+)?)\b",
+        r">\s*\$?\s*(\d+(?:\.\d+)?)\b",
+    ]
+    for pattern in min_patterns:
+        match = re.search(pattern, text)
+        if match:
+            return float(match.group(1)), None, False, approximate
+    return None, None, False, approximate
 
 
 def _first_index(tokens: list[str], words: set[str]) -> int | None:

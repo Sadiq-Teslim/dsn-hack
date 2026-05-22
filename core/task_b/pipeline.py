@@ -11,7 +11,7 @@ from core.task_b.candidate_ranker import llm_rerank_candidates
 from core.task_b.cross_domain_bridge import bridge_cross_domain
 from core.task_b.diversity import diversify
 from core.task_b.intent_parser import parse_intent
-from core.task_b.session_memory import get_or_create_session, session_context
+from core.task_b.session_memory import get_or_create_session, remember_recommendations, session_context
 from core.user_model import build_user_profile
 
 
@@ -42,6 +42,7 @@ async def run_task_b_pipeline(
             "top_k": top_k,
             "conversational": conversational,
             "session_state": session_state,
+            "current_context": context_text,
         },
     )
     pipeline = Pipeline(
@@ -108,8 +109,10 @@ class ParseIntentStep(Step):
             "target_categories": intent.target_categories,
             "excluded_categories": intent.excluded_categories,
             "constraints": intent.constraints,
+            "min_price": intent.min_price,
             "max_price": intent.max_price,
             "max_price_exclusive": intent.max_price_exclusive,
+            "price_is_approximate": intent.price_is_approximate,
             "is_cold_start": intent.is_cold_start,
             "is_cross_domain": intent.is_cross_domain,
             "needs_clarification": intent.needs_clarification,
@@ -177,9 +180,10 @@ class CandidateShortlistStep(Step):
         if unsupported:
             intent.unsupported_targets = unsupported
             context.working["intent"] = intent
+        scoped_catalog = _conversation_scoped_catalog(context)
         candidates = shortlist_items(
             context.user_profile,
-            context.catalog,
+            scoped_catalog,
             intent,
             limit=50,
         )
@@ -190,8 +194,12 @@ class CandidateShortlistStep(Step):
             "top_candidates": [item.title for item in candidates[:5]],
             "unsupported_targets": unsupported,
             "excluded_categories": excluded,
+            "follow_up_scope": bool(context.working.get("follow_up_scope")),
+            "previous_item_count": len(context.working.get("previous_item_ids", [])),
+            "min_price": intent.min_price,
             "max_price": intent.max_price,
             "max_price_exclusive": intent.max_price_exclusive,
+            "price_is_approximate": intent.price_is_approximate,
         }
         return context
 
@@ -269,6 +277,7 @@ class BuildRecommendationResponseStep(Step):
         context.working["items"] = items
         context.working["reasoning"] = reasoning
         context.working["fallback_used"] = bool(context.working.get("fallback_used")) or presentation_fallback
+        remember_recommendations(context.working["session_state"], items)
         context.working["_last_step_outputs"] = {
             "_summary": "Built final visible recommendation response.",
             "item_count": len(items),
@@ -356,7 +365,7 @@ def _summary(name: str, intent, items: list[RecommendedItem]) -> str:
                 f"I could not prepare {targets} recommendations because that category is not available in this demo collection. "
                 f"Available demo categories are {available}."
             )
-        if intent.target_categories and intent.max_price is not None:
+        if intent.target_categories and (intent.max_price is not None or intent.min_price is not None):
             targets = ", ".join(category.replace("_", " ") for category in intent.target_categories)
             return f"I could not find {targets} options {price_note}. Please raise the price limit or choose another available category."
         return "I could not find a suitable match for the current request. Please try a broader request or choose another available category."
@@ -372,7 +381,7 @@ def _summary(name: str, intent, items: list[RecommendedItem]) -> str:
     category_text = ""
     if intent.target_categories:
         category_text = " in " + ", ".join(category.replace("_", " ") for category in intent.target_categories)
-    price_text = f" {_price_note(intent)}" if intent.max_price is not None else ""
+    price_text = f" {_price_note(intent)}" if (intent.max_price is not None or intent.min_price is not None) else ""
     exclusion_text = ""
     if intent.excluded_categories:
         exclusion_text = ", excluding " + ", ".join(category.replace("_", " ") for category in intent.excluded_categories)
@@ -383,8 +392,16 @@ def _summary(name: str, intent, items: list[RecommendedItem]) -> str:
 
 
 def _price_note(intent) -> str:
-    if intent.max_price is None:
+    if intent.min_price is None and intent.max_price is None:
         return ""
+    if intent.min_price is not None and intent.max_price is not None:
+        prefix = "around " if intent.price_is_approximate else "between "
+        joiner = " and " if not intent.price_is_approximate else ""
+        if intent.price_is_approximate:
+            return f"{prefix}${intent.min_price:g}-${intent.max_price:g}"
+        return f"{prefix}${intent.min_price:g}{joiner}${intent.max_price:g}"
+    if intent.min_price is not None:
+        return f"at or above ${intent.min_price:g}"
     comparator = "below" if intent.max_price_exclusive else "at or below"
     return f"{comparator} ${intent.max_price:g}"
 
@@ -413,3 +430,26 @@ def _clean_visible_text(text: str) -> str:
     for word, replacement in replacements.items():
         cleaned = re.sub(rf"\b{re.escape(word)}\b", replacement, cleaned, flags=re.IGNORECASE)
     return cleaned
+
+
+def _conversation_scoped_catalog(context: AgentRuntimeContext) -> list[dict]:
+    current = str(context.working.get("current_context", ""))
+    state = context.working.get("session_state", {})
+    previous_item_ids = [item_id for item_id in state.get("last_item_ids", []) if item_id]
+    if not previous_item_ids or not _looks_like_follow_up(current):
+        return context.catalog
+    previous_ids = set(previous_item_ids)
+    scoped = [item for item in context.catalog if str(item.get("item_id", item.get("title", ""))) in previous_ids]
+    if not scoped:
+        return context.catalog
+    context.working["follow_up_scope"] = True
+    context.working["previous_item_ids"] = previous_item_ids
+    return scoped
+
+
+def _looks_like_follow_up(text: str) -> bool:
+    lowered = text.lower()
+    return bool(
+        re.search(r"\b(which|what|any|one|ones|them|those|these|among|of them|from them|the list|previous|first)\b", lowered)
+        or re.search(r"\b(which of them|which ones|any of them|from the list)\b", lowered)
+    )

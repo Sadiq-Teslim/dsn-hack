@@ -460,7 +460,7 @@ function humanTraceNotes(step) {
   if (name === "ParseIntentStep") {
     if (outputs.target_categories?.length) notes.push(`I understood the requested area as ${friendlyCategories(outputs.target_categories)}.`);
     if (outputs.excluded_categories?.length) notes.push(`I treated ${friendlyCategories(outputs.excluded_categories)} as excluded from the result.`);
-    if (outputs.max_price) notes.push(`I treated ${pricePhrase(outputs)} as a firm price rule.`);
+    if (outputs.max_price || outputs.min_price) notes.push(`I treated ${pricePhrase(outputs)} as a firm price rule.`);
     if (outputs.constraints?.length) notes.push(`I also noticed ${plural(outputs.constraints.length, "condition")}: ${friendlyList(outputs.constraints, 5)}.`);
     if (!notes.length) notes.push("I read the message and identified what kind of recommendation was needed.");
     return notes;
@@ -485,9 +485,10 @@ function humanTraceNotes(step) {
 
   if (name === "CandidateShortlistStep") {
     notes.push(`I found ${plural(outputs.candidate_count, "possible option")} after applying the request rules.`);
+    if (outputs.follow_up_scope) notes.push(`I limited the search to the ${plural(outputs.previous_item_count, "option")} I recommended in the previous reply.`);
     if (outputs.top_candidates?.length) notes.push(`I first considered ${friendlyList(outputs.top_candidates, 4)}.`);
     if (outputs.excluded_categories?.length) notes.push(`I removed options from ${friendlyCategories(outputs.excluded_categories)}.`);
-    if (outputs.max_price) notes.push(`I kept only options that respected the ${pricePhrase(outputs)} rule.`);
+    if (outputs.max_price || outputs.min_price) notes.push(`I kept only options that respected the ${pricePhrase(outputs)} rule.`);
     return notes;
   }
 
@@ -558,9 +559,22 @@ function reactionLabel(sentiment) {
 }
 
 function pricePhrase(outputs) {
-  const limit = Number(outputs.max_price);
-  const amount = Number.isInteger(limit) ? `$${limit}` : `$${limit.toFixed(2)}`;
-  return outputs.max_price_exclusive ? `below ${amount}` : `at or below ${amount}`;
+  const min = Number(outputs.min_price);
+  const max = Number(outputs.max_price);
+  const hasMin = Number.isFinite(min);
+  const hasMax = Number.isFinite(max);
+  if (hasMin && hasMax) {
+    const range = `${money(min)}-${money(max)}`;
+    return outputs.price_is_approximate ? `around ${range}` : `between ${money(min)} and ${money(max)}`;
+  }
+  if (hasMin) return `at or above ${money(min)}`;
+  return outputs.max_price_exclusive ? `below ${money(max)}` : `at or below ${money(max)}`;
+}
+
+function money(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return "$0";
+  return Number.isInteger(number) ? `$${number}` : `$${number.toFixed(2)}`;
 }
 
 function cleanTraceSentence(text) {
