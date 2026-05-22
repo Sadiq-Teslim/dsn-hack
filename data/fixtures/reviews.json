@@ -70,5 +70,173 @@
     "category": "All_Beauty",
     "rating": 5,
     "review_text": "Very rich and helpful when the weather dries my skin. It absorbs better than expected and smells gentle."
+  },
+  {
+    "user_id": "lagos-student",
+    "item_id": "grocery-004",
+    "title": "Indomie Chicken Noodles Value Pack",
+    "category": "Grocery_and_Gourmet_Food",
+    "rating": 5,
+    "review_text": "This is the emergency school-week meal. Cheap, fast, and no stress when I get back late from class."
+  },
+  {
+    "user_id": "lagos-student",
+    "item_id": "grocery-008",
+    "title": "Plantain Chips Multipack",
+    "category": "Grocery_and_Gourmet_Food",
+    "rating": 4,
+    "review_text": "Good for commuting and between lectures. I just wish the pack was bigger, but the price makes sense."
+  },
+  {
+    "user_id": "lagos-student",
+    "item_id": "movie-004",
+    "title": "Sugar Rush",
+    "category": "Movies_and_TV",
+    "rating": 4,
+    "review_text": "Chaotic and funny enough for friends to watch together. Not deep, but it gives weekend energy."
+  },
+  {
+    "user_id": "lagos-student",
+    "item_id": "game-005",
+    "title": "Mario Kart 8 Deluxe",
+    "category": "Video_Games",
+    "rating": 5,
+    "review_text": "Easy for everybody to join and shout. This is better for group play than serious solo gaming."
+  },
+  {
+    "user_id": "lagos-student",
+    "item_id": "beauty-006",
+    "title": "Natural Black Soap Bar",
+    "category": "All_Beauty",
+    "rating": 4,
+    "review_text": "Simple and affordable for everyday use. It can feel a little drying, so I pair it with lotion."
+  },
+  {
+    "user_id": "lagos-student",
+    "item_id": "book-004",
+    "title": "Atomic Habits",
+    "category": "Books",
+    "rating": 5,
+    "review_text": "Very practical. I liked that it gives small actions I can actually use for school routine and discipline."
+  },
+  {
+    "user_id": "lagos-student",
+    "item_id": "book-005",
+    "title": "The Smart Money Woman",
+    "category": "Books",
+    "rating": 4,
+    "review_text": "The money lessons feel relevant, especially when you are trying to stretch allowance and still enjoy life."
+  },
+  {
+    "user_id": "abuja-pro",
+    "item_id": "grocery-009",
+    "title": "Green Tea Ginger Bags",
+    "category": "Grocery_and_Gourmet_Food",
+    "rating": 4,
+    "review_text": "A calm office tea. The ginger is noticeable without becoming harsh, which makes it useful in the afternoon."
+  },
+  {
+    "user_id": "abuja-pro",
+    "item_id": "grocery-006",
+    "title": "Peak Powdered Milk Sachet Pack",
+    "category": "Grocery_and_Gourmet_Food",
+    "rating": 3,
+    "review_text": "Useful for tea and cereal, but I prefer larger packs for a cleaner routine and less packaging waste."
+  },
+  {
+    "user_id": "abuja-pro",
+    "item_id": "movie-007",
+    "title": "Anikulapo",
+    "category": "Movies_and_TV",
+    "rating": 5,
+    "review_text": "Beautifully made and culturally grounded. I liked the visual ambition and the moral tension."
+  },
+  {
+    "user_id": "abuja-pro",
+    "item_id": "movie-008",
+    "title": "Gangs of Lagos",
+    "category": "Movies_and_TV",
+    "rating": 4,
+    "review_text": "Strong Lagos atmosphere and serious stakes. Some parts are rough, but the world feels specific."
+  },
+  {
+    "user_id": "abuja-pro",
+    "item_id": "beauty-004",
+    "title": "Tea Tree Face Wash",
+    "category": "All_Beauty",
+    "rating": 4,
+    "review_text": "Good for humid mornings and leaves my face feeling clean. I would avoid it if your skin is very dry."
+  },
+  {
+    "user_id": "abuja-pro",
+    "item_id": "book-008",
+    "title": "Deep Work",
+    "category": "Books",
+    "rating": 5,
+    "review_text": "Directly useful for focused work. It is not light reading, but the discipline message is valuable."
+  },
+  {
+    "user_id": "abuja-pro",
+    "item_id": "book-006",
+    "title": "Half of a Yellow Sun",
+    "category": "Books",
+    "rating": 5,
+    "review_text": "Emotionally rich and historically serious. It rewards slow reading and gives a lot to think about."
+  },
+  {
+    "user_id": "ph-family",
+    "item_id": "grocery-005",
+    "title": "Basmati Rice 5kg Bag",
+    "category": "Grocery_and_Gourmet_Food",
+    "rating": 5,
+    "review_text": "Good for family cooking and guests. The grains come out well for jollof and fried rice."
+  },
+  {
+    "user_id": "ph-family",
+    "item_id": "grocery-010",
+    "title": "Party Jollof Spice Blend",
+    "category": "Grocery_and_Gourmet_Food",
+    "rating": 4,
+    "review_text": "Helpful when cooking for visitors. I still adjust pepper and salt, but the smoky base is nice."
+  },
+  {
+    "user_id": "ph-family",
+    "item_id": "movie-005",
+    "title": "Lionheart",
+    "category": "Movies_and_TV",
+    "rating": 5,
+    "review_text": "Warm and easy for the house to watch. I liked the family business angle and the calm humour."
+  },
+  {
+    "user_id": "ph-family",
+    "item_id": "game-004",
+    "title": "Minecraft Starter Collection",
+    "category": "Video_Games",
+    "rating": 4,
+    "review_text": "Creative and child-friendly. It takes some learning, but it keeps the children engaged in a good way."
+  },
+  {
+    "user_id": "ph-family",
+    "item_id": "beauty-003",
+    "title": "Cocoa Butter Body Lotion",
+    "category": "All_Beauty",
+    "rating": 5,
+    "review_text": "Very useful for the whole family, especially when the weather is dry. The scent is soft enough."
+  },
+  {
+    "user_id": "ph-family",
+    "item_id": "beauty-008",
+    "title": "Lip Balm Harmattan Pack",
+    "category": "All_Beauty",
+    "rating": 4,
+    "review_text": "Small but practical. I like that people can keep one in different bags during dry season."
+  },
+  {
+    "user_id": "ph-family",
+    "item_id": "book-002",
+    "title": "Things Fall Apart",
+    "category": "Books",
+    "rating": 5,
+    "review_text": "A serious classic with family and culture at the center. It is worth keeping at home."
   }
 ]

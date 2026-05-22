@@ -16,8 +16,12 @@
       "cultural_context": "Busy Lagos student balancing classes, friends, and transport costs",
       "history": [
         {"title": "Golden Morn Cereal Pack", "category": "Grocery_and_Gourmet_Food", "rating": 5, "review_text": "quick mornings before class"},
+        {"title": "Indomie Chicken Noodles Value Pack", "category": "Grocery_and_Gourmet_Food", "rating": 5, "review_text": "cheap late-night meal after class"},
         {"title": "The Wedding Party", "category": "Movies_and_TV", "rating": 5, "review_text": "funny and easy to watch with friends"},
-        {"title": "EA Sports FC 25", "category": "Video_Games", "rating": 4, "review_text": "great for weekend matches but pricey"}
+        {"title": "EA Sports FC 25", "category": "Video_Games", "rating": 4, "review_text": "great for weekend matches but pricey"},
+        {"title": "Mario Kart 8 Deluxe", "category": "Video_Games", "rating": 5, "review_text": "easy group fun with friends"},
+        {"title": "Atomic Habits", "category": "Books", "rating": 5, "review_text": "practical for school routine and discipline"},
+        {"title": "Natural Black Soap Bar", "category": "All_Beauty", "rating": 4, "review_text": "simple affordable everyday skincare"}
       ]
     }
   },
@@ -39,7 +43,11 @@
       "history": [
         {"title": "Premium Ground Coffee Blend", "category": "Grocery_and_Gourmet_Food", "rating": 4, "review_text": "smooth for work mornings"},
         {"title": "King of Boys", "category": "Movies_and_TV", "rating": 5, "review_text": "sharp political crime drama"},
-        {"title": "Matte Sunscreen SPF 50", "category": "All_Beauty", "rating": 4, "review_text": "good under makeup in heat"}
+        {"title": "Anikulapo", "category": "Movies_and_TV", "rating": 5, "review_text": "visually ambitious and culturally grounded"},
+        {"title": "Matte Sunscreen SPF 50", "category": "All_Beauty", "rating": 4, "review_text": "good under makeup in heat"},
+        {"title": "Tea Tree Face Wash", "category": "All_Beauty", "rating": 4, "review_text": "useful for humid morning routines"},
+        {"title": "Deep Work", "category": "Books", "rating": 5, "review_text": "directly useful for focus and professional discipline"},
+        {"title": "Green Tea Ginger Bags", "category": "Grocery_and_Gourmet_Food", "rating": 4, "review_text": "calm office tea for the afternoon"}
       ]
     }
   },
@@ -60,8 +68,13 @@
       "cultural_context": "Family-focused Port Harcourt shopper buying for home use and visitors",
       "history": [
         {"title": "Zobo Hibiscus Drink Mix", "category": "Grocery_and_Gourmet_Food", "rating": 5, "review_text": "easy to serve when people visit"},
+        {"title": "Basmati Rice 5kg Bag", "category": "Grocery_and_Gourmet_Food", "rating": 5, "review_text": "good for family cooking and guests"},
         {"title": "Family Animation Night Collection", "category": "Movies_and_TV", "rating": 4, "review_text": "safe for children"},
-        {"title": "Shea Butter Moisturizing Cream", "category": "All_Beauty", "rating": 5, "review_text": "rich and helpful for dry skin"}
+        {"title": "Lionheart", "category": "Movies_and_TV", "rating": 5, "review_text": "warm family story for the house"},
+        {"title": "Shea Butter Moisturizing Cream", "category": "All_Beauty", "rating": 5, "review_text": "rich and helpful for dry skin"},
+        {"title": "Cocoa Butter Body Lotion", "category": "All_Beauty", "rating": 5, "review_text": "useful for the whole family"},
+        {"title": "Minecraft Starter Collection", "category": "Video_Games", "rating": 4, "review_text": "creative and child-friendly"},
+        {"title": "Things Fall Apart", "category": "Books", "rating": 5, "review_text": "serious classic worth keeping at home"}
       ]
     }
   }
