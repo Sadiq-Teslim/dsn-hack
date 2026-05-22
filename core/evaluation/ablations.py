@@ -110,7 +110,14 @@ async def evaluate_agent_dataset(
             attributes=product_item.get("attributes", {}),
         )
         target_rating = float(held_out["rating"])
-        task_a = await run_task_a_pipeline(settings, persona, product, products, splits["train"])
+        task_a = await _run_task_a_with_eval_retries(
+            settings,
+            persona,
+            product,
+            products,
+            splits["train"],
+            require_llm=require_llm,
+        )
         task_a_fallbacks += int(task_a.fallback_used)
         full_errors.append(task_a.rating - target_rating)
         raw_errors.append(task_a.calibration.raw_rating - target_rating)
@@ -118,14 +125,13 @@ async def evaluate_agent_dataset(
         item_errors.append(item_means.get(held_out["item_id"], global_mean) - target_rating)
         rouge_scores.append(rouge_l_f1(task_a.review_text, held_out.get("review_text", "")))
 
-        task_b = await run_task_b_pipeline(
+        task_b = await _run_task_b_with_eval_retries(
             settings,
             persona,
             products,
             f"Recommend a {held_out['category'].replace('_', ' ')} item that fits my history.",
             [held_out["category"]],
-            10,
-            conversational=False,
+            require_llm=require_llm,
         )
         task_b_fallbacks += int(task_b.fallback_used)
         full_ids = [item.item_id for item in task_b.items]
@@ -150,6 +156,11 @@ async def evaluate_agent_dataset(
                     "generated_review": task_a.review_text,
                     "top_recommendations": [item.title for item in task_b.items[:3]],
                 }
+            )
+        if evaluated % 5 == 0:
+            print(
+                f"evaluated={evaluated} task_a_fallbacks={task_a_fallbacks} task_b_fallbacks={task_b_fallbacks}",
+                flush=True,
             )
 
     report = {
@@ -206,3 +217,45 @@ def evaluate_agent_dataset_sync(
     require_llm: bool = False,
 ) -> dict[str, Any]:
     return asyncio.run(evaluate_agent_dataset(data_path, output_path, max_examples, require_llm))
+
+
+async def _run_task_a_with_eval_retries(
+    settings: Settings,
+    persona: UserPersona,
+    product: ProductDetails,
+    products: list[dict[str, Any]],
+    reviews: list[dict[str, Any]],
+    require_llm: bool,
+):
+    attempts = 4 if require_llm else 1
+    result = None
+    for _ in range(attempts):
+        result = await run_task_a_pipeline(settings, persona, product, products, reviews)
+        if not require_llm or not result.fallback_used:
+            return result
+    return result
+
+
+async def _run_task_b_with_eval_retries(
+    settings: Settings,
+    persona: UserPersona,
+    products: list[dict[str, Any]],
+    context: str,
+    categories: list[str],
+    require_llm: bool,
+):
+    attempts = 4 if require_llm else 1
+    result = None
+    for _ in range(attempts):
+        result = await run_task_b_pipeline(
+            settings,
+            persona,
+            products,
+            context,
+            categories,
+            10,
+            conversational=False,
+        )
+        if not require_llm or not result.fallback_used:
+            return result
+    return result
