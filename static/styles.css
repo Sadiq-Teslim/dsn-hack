@@ -517,9 +517,12 @@ div {
 }
 
 .b-chat-sidebar {
+  position: sticky;
+  top: 76px;
   display: flex;
   flex-direction: column;
   gap: 18px;
+  height: calc(100vh - 76px);
   border-right: 1px solid var(--line);
   background: #f8fafc;
   padding: 24px;
@@ -556,18 +559,22 @@ div {
 }
 
 .b-chat-main {
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
-  min-height: calc(100vh - 76px);
+  min-height: 0;
   background: #fff;
+  padding-bottom: 168px;
 }
 
 .chat-scroll {
-  overflow-y: auto;
-  padding: 34px 0 24px;
+  overflow: visible;
+  padding: 34px 0 0;
 }
 
 .chat-composer-panel {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 330px;
+  z-index: 35;
   border-top: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.96);
   padding: 16px 24px 22px;
@@ -620,6 +627,7 @@ div {
   gap: 0;
   width: min(900px, calc(100% - 48px));
   margin: 0 auto;
+  min-height: 0;
 }
 
 .chat-message {
@@ -921,8 +929,18 @@ div {
   }
 
   .b-chat-sidebar {
+    position: static;
+    height: auto;
     border-right: 0;
     border-bottom: 1px solid var(--line);
+  }
+
+  .b-chat-main {
+    padding-bottom: 178px;
+  }
+
+  .chat-composer-panel {
+    left: 0;
   }
 
   .b-prompt-stack {
@@ -962,6 +980,10 @@ div {
 
   .chat-composer-panel {
     padding: 12px;
+  }
+
+  .b-chat-main {
+    padding-bottom: 218px;
   }
 
   .chat-composer-buttons {

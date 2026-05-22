@@ -57,7 +57,11 @@ function renderConversation() {
       ${conversation.map(renderChatMessage).join("")}
     </div>
   `;
-  $("recommend-result").scrollTop = $("recommend-result").scrollHeight;
+  window.requestAnimationFrame(() => {
+    const messages = $("recommend-result").querySelectorAll(".chat-message");
+    const lastMessage = messages[messages.length - 1];
+    lastMessage?.scrollIntoView({ block: "end", behavior: "smooth" });
+  });
 }
 
 function renderChatMessage(message) {
