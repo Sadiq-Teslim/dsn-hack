@@ -222,7 +222,8 @@ async function generateRecommendations() {
 function resizeComposer() {
   const input = $("recommend-context");
   input.style.height = "auto";
-  input.style.height = `${Math.min(input.scrollHeight, 180)}px`;
+  input.style.height = `${Math.min(Math.max(input.scrollHeight, 34), 180)}px`;
+  input.style.overflowY = input.scrollHeight > 180 ? "auto" : "hidden";
 }
 
 async function generateYarn() {
