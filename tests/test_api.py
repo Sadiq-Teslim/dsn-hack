@@ -179,6 +179,27 @@ def test_recommendation_respects_excluded_categories() -> None:
     assert "Movies_and_TV" in parse_step["outputs"]["excluded_categories"]
 
 
+def test_new_user_ambiguous_request_asks_clarifying_questions() -> None:
+    persona = client.get("/api/v1/demo-personas").json()[0]["persona"]
+    response = client.post(
+        "/api/v1/recommend",
+        json={
+            "user_persona": persona,
+            "context": "I'm new here, can you help me find something?",
+            "top_k": 10,
+            "conversational": True,
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "needs_clarification"
+    assert payload["items"] == []
+    assert len(payload["follow_up_questions"]) >= 2
+    parse_step = next(step for step in payload["reasoning_trace"]["steps"] if step["name"] == "ParseIntentStep")
+    assert parse_step["outputs"]["is_cold_start"] is True
+    assert parse_step["outputs"]["needs_clarification"] is True
+
+
 def test_follow_up_filters_previous_recommendations_with_price_range() -> None:
     persona = client.get("/api/v1/demo-personas").json()[1]["persona"]
     first = client.post(

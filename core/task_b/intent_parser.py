@@ -40,6 +40,8 @@ CATEGORY_ALIASES = {
 def parse_intent(context: str, profile: UserProfile, include_categories: list[str]) -> IntentSignal:
     token_list = tokenize(context)
     tokens = set(token_list)
+    explicit_new_user = _explicit_new_user(context, tokens)
+    ambiguous_discovery = _ambiguous_discovery_request(context, tokens)
     min_price, max_price, max_price_exclusive, price_is_approximate = _extract_price_bounds(context)
     excluded_categories = _excluded_categories_from_context(token_list)
     categories = list(include_categories)
@@ -95,13 +97,13 @@ def parse_intent(context: str, profile: UserProfile, include_categories: list[st
         is_cross_domain = len(mentioned_categories | source_categories) > 1
     if not categories and any(word in tokens for word in ["based", "taste", "like", "liked"]):
         is_cross_domain = True
-    is_cold_start = profile.cold_start
-    needs_clarification = is_cold_start and len(tokens) < 5
+    is_cold_start = profile.cold_start or explicit_new_user
+    needs_clarification = bool((is_cold_start and (len(tokens) < 8 or ambiguous_discovery)) or ambiguous_discovery)
     questions = []
     if needs_clarification:
         questions = [
-            "What is one product, film, game, or food item you recently enjoyed?",
-            "Are you optimizing for budget, quality, convenience, or something fun?",
+            "What kind of thing are you looking for: books, food, movies, games, beauty products, or something else?",
+            "What matters most for this choice: budget, quality, convenience, family use, or something fun?",
         ]
     descriptors = _taste_descriptors(context, profile)
     return IntentSignal(
@@ -120,6 +122,52 @@ def parse_intent(context: str, profile: UserProfile, include_categories: list[st
         needs_clarification=needs_clarification,
         clarification_questions=questions,
     )
+
+
+def _explicit_new_user(context: str, tokens: set[str]) -> bool:
+    text = context.lower()
+    return bool(
+        {"new", "first", "start", "starting"} & tokens
+        and (
+            "new here" in text
+            or "first time" in text
+            or "new user" in text
+            or "new to this" in text
+            or "just starting" in text
+        )
+    )
+
+
+def _ambiguous_discovery_request(context: str, tokens: set[str]) -> bool:
+    text = context.lower()
+    broad_request = bool(
+        "find something" in text
+        or "recommend something" in text
+        or "show me something" in text
+        or "help me choose" in text
+        or "help me find" in text
+    )
+    has_specific_category = any(token in CATEGORY_ALIASES for token in tokens)
+    has_specific_constraint = bool(
+        tokens
+        & {
+            "budget",
+            "cheap",
+            "affordable",
+            "family",
+            "weekend",
+            "work",
+            "school",
+            "quick",
+            "routine",
+            "useful",
+            "daily",
+            "buy",
+            "fun",
+        }
+    )
+    has_price = any(char.isdigit() for char in context) or "$" in context
+    return broad_request and not (has_specific_category or has_specific_constraint or has_price)
 
 
 def _excluded_categories_from_context(tokens: list[str]) -> list[str]:
