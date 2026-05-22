@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>BCT Agent Studio</title>
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="/static/styles.css?v=2" />
+    <link rel="stylesheet" href="/static/styles.css?v=5" />
   </head>
   <body>
     <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/85 backdrop-blur-xl">
@@ -17,13 +17,11 @@
           </span>
           <span class="text-sm font-black uppercase tracking-wide text-slate-950">BCT Agent Studio</span>
         </a>
-        <nav class="hidden items-center gap-7 md:flex">
-          <a class="nav-link" data-nav href="/">Home</a>
-          <a class="nav-link" data-nav href="/task-a">Task A</a>
-          <a class="nav-link" data-nav href="/task-b">Task B</a>
-          <a class="nav-link" data-nav href="/evaluation">Evaluation</a>
-        </nav>
-        <a href="/task-a" class="button-primary hidden md:inline-flex">Launch Demo</a>
+        <div class="header-actions">
+          <span class="header-badge">DSN x BCT</span>
+          <span class="header-badge header-badge-live">Submission ready</span>
+          <a href="/task-a" class="header-cta">Launch Demo</a>
+        </div>
       </div>
     </header>
 

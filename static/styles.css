@@ -196,6 +196,65 @@ div {
   color: var(--ink);
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.header-badge,
+.header-cta {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.header-badge {
+  border: 1px solid #e2e8f0;
+  background: rgba(248, 250, 252, 0.9);
+  color: #475569;
+  padding: 0 12px;
+}
+
+.header-badge-live {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #047857;
+}
+
+.header-badge-live::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  margin-right: 7px;
+  border-radius: 999px;
+  background: #16a34a;
+  box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.12);
+}
+
+.header-cta {
+  background: #111827;
+  color: #fff;
+  padding: 0 15px;
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.12);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    background 180ms ease;
+}
+
+.header-cta:hover {
+  background: #020617;
+  box-shadow: 0 15px 30px rgba(15, 23, 42, 0.18);
+  transform: translateY(-1px);
+}
+
 .hero-stage {
   position: relative;
   min-height: calc(100vh - 76px);
@@ -1656,6 +1715,20 @@ div {
 @media (max-width: 640px) {
   .shell {
     width: min(100% - 24px, 1180px);
+  }
+
+  .header-actions {
+    gap: 8px;
+  }
+
+  .header-badge {
+    display: none;
+  }
+
+  .header-cta {
+    min-height: 34px;
+    padding: 0 12px;
+    font-size: 11px;
   }
 
   .hero-stage {
