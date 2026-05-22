@@ -9,9 +9,11 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app app
+COPY core core
 COPY static static
 COPY data/fixtures data/fixtures
 COPY data/amazon_subset data/amazon_subset
+COPY data/nigerian_context data/nigerian_context
 
 EXPOSE 8000
 

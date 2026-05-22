@@ -318,6 +318,8 @@ scripts/              Dataset, evaluation, and paper generation scripts
 tests/                Unit and integration tests
 ```
 
+The Docker image copies both `app/` and `core/`; both directories are required at runtime.
+
 ## Team Ace
 
 - **Teslim Sadiq:** product engineering, backend/API integration, deployment, demo flow
