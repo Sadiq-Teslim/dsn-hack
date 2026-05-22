@@ -8,6 +8,7 @@ const {
   bindNavigation,
   personaSummary,
   createVoiceInput,
+  enhanceAllSelects,
   playYarnAudio,
   renderYarnResult,
   renderReasoningTrace,
@@ -247,6 +248,7 @@ async function init() {
   bindNavigation();
   await loadBaseData();
   bindPersonaSelect(renderPersona);
+  enhanceAllSelects();
   document.querySelectorAll("[data-context]").forEach((button) => {
     button.addEventListener("click", () => {
       $("recommend-context").value = button.dataset.context;

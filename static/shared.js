@@ -81,8 +81,113 @@ function bindPersonaSelect(onChange) {
     state.activePersona = state.personas.find((item) => item.id === event.target.value);
     onChange?.(state.activePersona);
   });
+  enhanceSelect(select);
   onChange?.(state.activePersona);
 }
+
+function enhanceAllSelects(root = document) {
+  root.querySelectorAll("select.select").forEach((select) => enhanceSelect(select));
+}
+
+function enhanceSelect(select) {
+  if (!select || select.dataset.enhancedSelect === "true") {
+    updateEnhancedSelect(select);
+    return;
+  }
+  const wrapper = document.createElement("div");
+  wrapper.className = "custom-select";
+  wrapper.dataset.selectFor = select.id || "";
+  wrapper.innerHTML = `
+    <button class="custom-select-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+      <span></span>
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <path d="m6 9 6 6 6-6"></path>
+      </svg>
+    </button>
+    <div class="custom-select-menu" role="listbox"></div>
+  `;
+  select.classList.add("native-select-hidden");
+  select.dataset.enhancedSelect = "true";
+  select.insertAdjacentElement("afterend", wrapper);
+  const trigger = wrapper.querySelector(".custom-select-trigger");
+  trigger.addEventListener("click", () => toggleSelectMenu(wrapper));
+  trigger.addEventListener("keydown", (event) => handleSelectKeydown(event, select, wrapper));
+  select.addEventListener("change", () => updateEnhancedSelect(select));
+  updateEnhancedSelect(select);
+}
+
+function updateEnhancedSelect(select) {
+  if (!select) return;
+  const wrapper = select.nextElementSibling?.classList?.contains("custom-select")
+    ? select.nextElementSibling
+    : null;
+  if (!wrapper) return;
+  const triggerText = wrapper.querySelector(".custom-select-trigger span");
+  const menu = wrapper.querySelector(".custom-select-menu");
+  const options = Array.from(select.options);
+  const active = options.find((option) => option.value === select.value) || options[0];
+  triggerText.textContent = active?.textContent || "";
+  menu.innerHTML = options
+    .map((option) => {
+      const selected = option.value === select.value;
+      return `
+        <button class="custom-select-option${selected ? " selected" : ""}" type="button" role="option" aria-selected="${selected}" data-value="${escapeHtml(option.value)}">
+          ${escapeHtml(option.textContent)}
+        </button>
+      `;
+    })
+    .join("");
+  menu.querySelectorAll(".custom-select-option").forEach((button) => {
+    button.addEventListener("click", () => {
+      select.value = button.dataset.value;
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+      closeSelectMenu(wrapper);
+    });
+  });
+}
+
+function toggleSelectMenu(wrapper) {
+  const isOpen = wrapper.classList.contains("open");
+  closeAllSelectMenus();
+  if (!isOpen) {
+    wrapper.classList.add("open");
+    wrapper.querySelector(".custom-select-trigger").setAttribute("aria-expanded", "true");
+  }
+}
+
+function closeSelectMenu(wrapper) {
+  wrapper.classList.remove("open");
+  wrapper.querySelector(".custom-select-trigger").setAttribute("aria-expanded", "false");
+}
+
+function closeAllSelectMenus() {
+  document.querySelectorAll(".custom-select.open").forEach(closeSelectMenu);
+}
+
+function handleSelectKeydown(event, select, wrapper) {
+  const options = Array.from(select.options);
+  const currentIndex = Math.max(0, options.findIndex((option) => option.value === select.value));
+  if (event.key === "Escape") {
+    closeSelectMenu(wrapper);
+    return;
+  }
+  if (!["ArrowDown", "ArrowUp", "Enter", " "].includes(event.key)) return;
+  event.preventDefault();
+  if (event.key === "Enter" || event.key === " ") {
+    toggleSelectMenu(wrapper);
+    return;
+  }
+  const direction = event.key === "ArrowDown" ? 1 : -1;
+  const nextIndex = Math.min(options.length - 1, Math.max(0, currentIndex + direction));
+  select.value = options[nextIndex].value;
+  select.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
+document.addEventListener("click", (event) => {
+  if (!event.target.closest(".custom-select")) {
+    closeAllSelectMenus();
+  }
+});
 
 function bindNavigation() {
   const current = window.location.pathname;
@@ -120,12 +225,19 @@ function createVoiceInput({ button, target, status, append = false }) {
   recognition.continuous = false;
   let finalTranscript = "";
   let isListening = false;
+  const hasIconButton = button.classList.contains("composer-icon-button");
+  const idleHtml = button.innerHTML;
   const idleLabel = button.textContent;
 
   recognition.onstart = () => {
     finalTranscript = "";
     isListening = true;
-    button.textContent = "Listening...";
+    if (hasIconButton) {
+      button.classList.add("listening");
+      button.setAttribute("aria-label", "Listening");
+    } else {
+      button.textContent = "Listening...";
+    }
     status.textContent = "Listening. Speak naturally.";
     status.classList.add("recording");
   };
@@ -149,13 +261,25 @@ function createVoiceInput({ button, target, status, append = false }) {
   recognition.onerror = (event) => {
     status.textContent = `Voice input stopped: ${event.error}. You can type instead.`;
     status.classList.remove("recording");
-    button.textContent = idleLabel;
+    if (hasIconButton) {
+      button.classList.remove("listening");
+      button.innerHTML = idleHtml;
+      button.setAttribute("aria-label", "Speak");
+    } else {
+      button.textContent = idleLabel;
+    }
     isListening = false;
   };
 
   recognition.onend = () => {
     status.classList.remove("recording");
-    button.textContent = idleLabel;
+    if (hasIconButton) {
+      button.classList.remove("listening");
+      button.innerHTML = idleHtml;
+      button.setAttribute("aria-label", "Speak");
+    } else {
+      button.textContent = idleLabel;
+    }
     isListening = false;
     if (target.value.trim()) {
       status.textContent = "Voice captured. You can edit the text before generating.";
@@ -276,6 +400,8 @@ window.AgentApp = {
   renderBrandStatus,
   loadBaseData,
   bindPersonaSelect,
+  enhanceAllSelects,
+  enhanceSelect,
   bindNavigation,
   personaSummary,
   readAloud,

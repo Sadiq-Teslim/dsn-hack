@@ -374,6 +374,130 @@ div {
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
 }
 
+.native-select-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.custom-select {
+  position: relative;
+  width: 100%;
+}
+
+.custom-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+  color: var(--ink);
+  padding: 12px 14px;
+  text-align: left;
+  font-weight: 750;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.custom-select-trigger span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.custom-select-trigger svg {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 160ms ease;
+}
+
+.custom-select.open .custom-select-trigger,
+.custom-select-trigger:focus {
+  border-color: rgba(37, 99, 235, 0.55);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+  outline: none;
+}
+
+.custom-select.open .custom-select-trigger svg {
+  transform: rotate(180deg);
+}
+
+.custom-select-menu {
+  position: absolute;
+  z-index: 80;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  display: none;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+  padding: 6px;
+  backdrop-filter: blur(16px);
+  animation: select-menu-in 160ms ease both;
+}
+
+.custom-select.open .custom-select-menu {
+  display: grid;
+  gap: 2px;
+}
+
+.custom-select-option {
+  width: 100%;
+  border-radius: 13px;
+  background: transparent;
+  color: #1e293b;
+  padding: 11px 12px;
+  text-align: left;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background 140ms ease,
+    color 140ms ease,
+    transform 140ms ease;
+}
+
+.custom-select-option:hover {
+  background: #f1f5f9;
+  transform: translateX(2px);
+}
+
+.custom-select-option.selected {
+  background: #111827;
+  color: #fff;
+}
+
+@keyframes select-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .button-primary,
 .button-secondary {
   display: inline-flex;
@@ -686,6 +810,11 @@ div {
   stroke-width: 2.4;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+.composer-icon-button.listening {
+  color: #b91c1c;
+  box-shadow: 0 0 0 5px rgba(239, 68, 68, 0.12);
 }
 
 .chat-thread {

@@ -8,6 +8,8 @@ const {
   bindNavigation,
   personaSummary,
   createVoiceInput,
+  enhanceAllSelects,
+  enhanceSelect,
   playYarnAudio,
   renderYarnResult,
   renderReasoningTrace,
@@ -136,6 +138,8 @@ async function init() {
   $("product-select").addEventListener("change", (event) => {
     fillProduct(products.find((item) => item.title === event.target.value));
   });
+  enhanceSelect($("product-select"));
+  enhanceAllSelects();
   $("generate-review").addEventListener("click", generateReview);
   createVoiceInput({
     button: $("speak-description"),
