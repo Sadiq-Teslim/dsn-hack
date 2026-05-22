@@ -139,16 +139,23 @@ function renderRecommendationsMessage(result) {
       const fitPercent = `${Math.round(Number(item.score || 0) * 100)}%`;
       return `
         <div class="recommendation-row chat-recommendation-row" style="--stagger: ${index}">
-          <div class="rank-badge">${escapeHtml(item.rank)}</div>
-          <div>
-            <h3 class="text-xl font-black text-slate-950">${escapeHtml(item.title)}</h3>
-            <p class="mt-1 text-sm font-bold text-slate-500">${escapeHtml(item.category.replaceAll("_", " "))} &middot; $${escapeHtml(item.price ?? "n/a")}</p>
-            <p class="mt-3 leading-7 text-slate-700">${escapeHtml(item.reason)}</p>
-            <div class="mt-3 flex flex-wrap gap-2">${matches || '<span class="tag">recommended fit</span>'}</div>
+          <div class="rec-card-header">
+            <div class="rec-title-wrap">
+              <div class="rank-badge">${escapeHtml(item.rank)}</div>
+              <div class="min-w-0">
+                <h3>${escapeHtml(item.title)}</h3>
+                <p class="rec-meta">${escapeHtml(item.category.replaceAll("_", " "))} · $${escapeHtml(item.price ?? "n/a")}</p>
+              </div>
+            </div>
+            <div class="fit-pill">
+              <span>Fit</span>
+              <strong>${escapeHtml(fitPercent)}</strong>
+            </div>
           </div>
-          <div class="score rounded-2xl bg-slate-50 px-4 py-3 text-right">
-            <p class="text-xs font-black uppercase text-slate-400">Fit</p>
-            <p class="text-2xl font-black">${escapeHtml(fitPercent)}</p>
+          <p class="rec-reason">${escapeHtml(item.reason)}</p>
+          <div class="rec-tags">${matches || '<span class="tag">recommended fit</span>'}</div>
+          <div class="fit-meter" aria-hidden="true">
+            <span style="width: ${escapeHtml(fitPercent)}"></span>
           </div>
         </div>
       `;
