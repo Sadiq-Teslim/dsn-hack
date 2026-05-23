@@ -1,24 +1,122 @@
-# Team Ace: Dynamic User Modeling and Contextual Recommendation
+# Team Ace - DSN x BCT LLM Agent Challenge
 
-**DSN x BCT LLM Agent Challenge, Data & AI Summit Hackathon 3.0**
+> **A user is not a string in a prompt. A user is a structured, retrievable, evolving behavioural agent.**
+>
+> Task A asks that agent: *"How would this user review this item?"*
+>
+> Task B asks that agent: *"What should this user choose next?"*
+>
+> Both tasks share the same underlying user representation. This repository is that representation, made queryable through two FastAPI services and two web UIs.
 
-Team Ace built the challenge as two deployable agent services: one for simulating how a user would review an unseen item, and one for recommending what they are likely to choose next. The services share the same behavioral philosophy, but each task can be submitted, deployed, tested, and documented independently.
+---
 
-The core idea is simple: users are not static profiles. They are changing stories shaped by ratings, reviews, budgets, routines, family needs, location, language, and culture. Our system turns those signals into dynamic behavioral personas that can power both review simulation and personalized recommendation.
+## Live Demos
+
+| Task | URL | What it does |
+|------|-----|--------------|
+| **Task A - Review Studio** | https://team-ace-task-a-user-modeling.onrender.com | Simulate the review a user would actually write |
+| **Task B - Recommendation Chat** | https://team-ace-task-b-recommendation.onrender.com | Rank items around a person's real context |
+
+> **Note:** Services run on Render's free tier. If a page takes 30-60 seconds to respond on first load, the service is waking from sleep. Subsequent requests are much faster. During judging, a lightweight uptime heartbeat can be used to keep both services warm.
+
+---
+
+## Headline Results
+
+| Metric | Team Ace | Baseline | Lift |
+|--------|---------:|---------:|------|
+| **Task A - RMSE** (86 held-out reviews) | **0.7421** | 1.3133 (global mean) | **43.5% reduction** |
+| **Task A - RMSE** | **0.7421** | 1.3117 (item mean) | **43.4% reduction** |
+| **Task A - ROUGE-L F1** (Groq-backed slice) | **0.2014** | 0.1150 (deterministic) | **+75%** |
+| **Task B - NDCG@10** (86 held-out users) | **0.1039** | 0.0194 (popularity) | **5.4x** |
+| **Task B - NDCG@10** | **0.1039** | 0.0481 (local ranker, no LLM) | **2.2x** |
+| **Task B - Hit Rate@10** | **0.1860** | 0.0349 (popularity) | **5.3x** |
+| **Calibration spread** at sentiment 0.82 | **4.7 vs 3.7 stars** | single global rating | Full-star fidelity |
+
+The repository includes a checked-in Amazon Reviews 2023 subset for reproducible local evaluation:
+
+- 252 products
+- 265 real reviews
+- 70 users
+- 86 held-out test interactions
+- 4 domains: `All_Beauty`, `Grocery_and_Gourmet_Food`, `Movies_and_TV`, `Video_Games`, plus a compact demo book catalog for cross-domain judge testing
+
+Run the core evaluation from the repo root:
+
+```bash
+python scripts/evaluate_core_agent.py --data-path data/amazon_subset --output docs/core_evaluation_report.json --max-examples 100
+```
+
+Without `GROQ_API_KEY`, the app uses deterministic fallback behavior so judges can still run the code. With `GROQ_API_KEY`, review text, recommendation explanations, and cross-domain reasoning become richer.
+
+---
+
+## Quick Start
+
+```bash
+git clone https://github.com/Sadiq-Teslim/dsn-hack.git
+cd dsn-hack
+
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements-dev.txt
+
+# Optional: enable hosted LLM and voice generation
+copy .env.example .env
+# Fill GROQ_API_KEY and YARNGPT_API_KEY in .env
+
+# Run Task A on port 8001
+python -m uvicorn app.task_a_main:app --host 0.0.0.0 --port 8001
+
+# Run Task B on port 8002 in a second terminal
+python -m uvicorn app.task_b_main:app --host 0.0.0.0 --port 8002
+```
+
+Open:
+
+```text
+Task A: http://localhost:8001
+Task B: http://localhost:8002
+```
+
+---
+
+## Architecture
+
+The system is organized as five layers. Layers 1-3 are shared across both tasks; Layers 4 and 5 are task-specific.
+
+```text
+Layer 1 - Data foundation
+  data/fixtures/ and data/amazon_subset/ hold product, review, persona, and evaluation data.
+
+Layer 2 - User representation
+  core/user_model/ builds a structured UserProfile with rating behavior, budget, taste tokens,
+  category affinity, Nigerian register, and history-derived signals.
+
+Layer 3 - Retrieval and memory
+  core/retrieval/ retrieves review evidence and item candidates before generation or ranking.
+
+Layer 4 - Agentic task pipelines
+  core/task_a/ handles evidence retrieval, sentiment prediction, rating calibration, review generation,
+  consistency checking, and formal reasoning.
+  core/task_b/ handles intent parsing, cold-start clarification, cross-domain bridging,
+  candidate shortlisting, LLM re-ranking, diversity filtering, and response building.
+
+Layer 5 - Interfaces
+  app.task_a_main:app exposes the Review Studio.
+  app.task_b_main:app exposes the Recommendation Chat.
+```
+
+The LLM does not secretly run the whole product. Task A predicts sentiment and calibrates ratings locally before Groq writes or polishes the review. Task B retrieves and scores a candidate shortlist locally, then uses Groq to reason over those candidates and re-rank them before diversity filtering. If no API key is available, deterministic fallback text keeps both apps runnable.
+
+---
 
 ## What We Built
 
-- **Task A: User Modeling**
-  Predicts star ratings and generates grounded, tone-aware reviews from a user persona and product details.
-
-- **Task B: Recommendation**
-  Produces contextual, cross-domain ranked recommendations from a persona and current need.
-
-- **Nigerian-aware experience**
-  Includes Lagos student, Abuja professional, and Port Harcourt family shopper personas, with support for budget pressure, family context, local routines, harmattan/weather cues, local taste, and voice-ready Nigerian language modes.
-
-- **Voice layer**
-  Supports browser voice input and hosted YarnGPT audio output for localized explanations.
+- **Task A: User Modeling** - predicts star ratings and generates grounded, tone-aware reviews from a user persona and product details.
+- **Task B: Recommendation** - produces contextual, cross-domain ranked recommendations from a persona and current need.
+- **Nigerian-aware experience** - includes Lagos student, Abuja professional, and Port Harcourt family shopper personas, with support for budget pressure, family context, local routines, local taste, and voice-ready Nigerian language modes.
+- **Voice layer** - supports browser voice input and hosted YarnGPT audio output for localized explanations.
 
 ## Why Team Ace Is Different
 
@@ -28,45 +126,6 @@ The core idea is simple: users are not static profiles. They are changing storie
 | Language/reasoning | LLM does everything | Groq generates reviews and re-ranks shortlisted candidates with traceable reasoning | Controllable and consistent |
 | User representation | Static embeddings | Dynamic traces plus Nigerian signals | Culturally relevant |
 | Architecture | Monolithic demo | Shared core orchestrator with task-specific apps | Judge-friendly and reliable |
-
-The LLM does not secretly run the whole product. Task A predicts sentiment and calibrates ratings locally before Groq writes the final review. Task B retrieves and scores a candidate shortlist locally, then uses Groq to reason over those candidates and re-rank them before diversity filtering. If no API key is available, deterministic fallback text keeps both apps runnable.
-
-## How The New Apps Work
-
-Both deployed apps now share a `core/` agent layer:
-
-```text
-core/schemas/          Pydantic contracts for personas, traces, candidates, and results
-core/orchestration/    Step + Pipeline runner that captures latency and reasoning traces
-core/user_model/       Dynamic user profile builder from persona and history
-core/retrieval/        Review and item shortlist retrieval
-core/localization/     Nigerian register exemplars for grounded local tone
-core/task_a/           Review simulation: retrieval, sentiment, calibration, generation
-core/task_b/           Recommendation: intent parsing, cross-domain bridge, LLM re-ranking
-```
-
-Task A is a structured workspace: judges select or edit a persona, edit product details, and click **Generate Review**. The result shows the predicted rating, generated review, calibration details, retrieved evidence, and an expandable agent reasoning trace.
-
-Task B is closer to chat: judges enter the current need, the app maintains a `session_id`, and cold-start flows can ask follow-up questions before recommending. The final result shows ranked items plus the trace from intent parsing through LLM re-ranking.
-
-## Key Results
-
-Current checked-in real Amazon Reviews 2023 subset:
-
-- 252 products
-- 265 real reviews
-- 70 users
-- 86 held-out test interactions
-- 4 domains: `All_Beauty`, `Grocery_and_Gourmet_Food`, `Movies_and_TV`, `Video_Games`
-
-| Metric | Team Ace | Baseline |
-|---|---:|---:|
-| Task A RMSE | `0.7421` | `1.3133` |
-| Task A raw behavioral RMSE ablation | `0.7357` | `1.3133` |
-| Task B NDCG@10 | `0.1039` | `0.0194` |
-| Task B Hit Rate@10 | `0.1860` | `0.0349` |
-
-The scores are intentionally reported on a small, checked-in subset so judges can inspect and reproduce the evidence. The important signal is the ablation direction: the rating model beats global mean, and the traced recommendation agent beats both the local ranker and popularity baselines.
 
 ## Deliverables
 
@@ -97,36 +156,19 @@ The scores are intentionally reported on a small, checked-in subset so judges ca
 3. Generate recommendations.
 4. Review the ranked items, scores, reasons, and matched preferences.
 
-## Quick Start
-
-```bash
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-pip install -r requirements-dev.txt
-```
-
-Run each task in a separate terminal:
-
-```bash
-uvicorn app.task_a_main:app --reload --port 8001
-uvicorn app.task_b_main:app --reload --port 8002
-```
-
-Open:
-
-```text
-Task A: http://127.0.0.1:8001
-Task B: http://127.0.0.1:8002
-```
-
 ## Environment Variables
 
 Create `.env` from `.env.example`.
 
 ```env
+LLM_PROVIDER=groq
 GROQ_API_KEY=your_groq_key
 GROQ_MODEL=llama-3.1-8b-instant
+DATA_PATH=data/fixtures
 YARNGPT_API_KEY=your_yarngpt_key
+YARNGPT_BASE_URL=https://yarngpt.ai/api/v1
+YARNGPT_VOICE=Idera
+YARNGPT_RESPONSE_FORMAT=mp3
 ```
 
 All keys are optional for local reproducibility:
@@ -155,6 +197,13 @@ This repository includes `render.yaml` with two Render web services:
 - `team-ace-task-a-user-modeling`
 - `team-ace-task-b-recommendation`
 
+Live URLs:
+
+```text
+Task A: https://team-ace-task-a-user-modeling.onrender.com
+Task B: https://team-ace-task-b-recommendation.onrender.com
+```
+
 Recommended Render settings:
 
 ```text
@@ -167,8 +216,14 @@ Health Check Path: /health
 Set secrets in the Render dashboard:
 
 ```env
+LLM_PROVIDER=groq
+GROQ_MODEL=llama-3.1-8b-instant
+DATA_PATH=data/fixtures
 GROQ_API_KEY=your_groq_key
 YARNGPT_API_KEY=your_yarngpt_key
+YARNGPT_BASE_URL=https://yarngpt.ai/api/v1
+YARNGPT_VOICE=Idera
+YARNGPT_RESPONSE_FORMAT=mp3
 ```
 
 The keys are marked `sync: false` in `render.yaml`, so secrets are never committed.
