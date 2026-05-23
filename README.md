@@ -17,7 +17,7 @@
 | **Task A - Review Studio** | https://team-ace-task-a-user-modeling.onrender.com | Simulate the review a user would actually write |
 | **Task B - Recommendation Chat** | https://team-ace-task-b-recommendation.onrender.com | Rank items around a person's real context |
 
-> **Note:** Services run on Render's free tier. If the page takes 30-60 seconds to respond on first load, the service is waking from sleep. Subsequent requests are instant. An uptime heartbeat can keep both services warm during the judging window.
+> **Note:** Services run on Render's free tier. If the page takes 30-60 seconds to respond on first load, the service is waking from sleep. Subsequent requests are instant.
 
 ---
 
@@ -293,16 +293,6 @@ We report failure modes honestly because the brief rewards transparency over hyp
 
 ---
 
-## What's Next
-
-- Complete full 86-example Groq-required benchmarking under stable provider limits.
-- Train a learned calibration function on held-out `(user, rating)` pairs.
-- Fine-tune a small open model on the Nigerian Review Corpus to reduce few-shot retrieval dependence and improve latency.
-- Add an adaptive cold-start questioner using information-theoretic question selection.
-- Jointly optimize the two tasks so improvements in rating RMSE also improve recommendation hit rate.
-
----
-
 ## Papers
 
 - [Task A - User Modeling (DOCX)](docs/Task_A_User_Modeling_Team_Ace.docx)
@@ -313,5 +303,3 @@ We report failure modes honestly because the brief rewards transparency over hyp
 ## Team
 
 **Team Ace** - DSN x BCT LLM Agent Challenge, Hackathon 3.0
-
-Built in Lagos. Tested against real Nigerian context. Submitted with honest numbers.
