@@ -254,6 +254,7 @@ async function generateYarn() {
 }
 
 async function init() {
+  document.documentElement.dataset.taskBReady = "loading";
   bindNavigation();
   await loadBaseData();
   bindPersonaSelect(renderPersona);
@@ -293,9 +294,16 @@ async function init() {
       }
     });
   });
+  document.documentElement.dataset.taskBReady = "true";
 }
 
 init().catch((error) => {
+  document.documentElement.dataset.taskBReady = "error";
+  const message = escapeHtml(error.message || "The recommendation workspace could not finish loading. Please refresh the page.");
+  const personaCard = $("persona-card");
+  if (personaCard) {
+    personaCard.innerHTML = `<div class="panel p-4 text-red-700">${message}</div>`;
+  }
   $("recommend-result").innerHTML = `<div class="panel p-6 text-red-700">${escapeHtml(error.message)}</div>`;
 });
 })();
